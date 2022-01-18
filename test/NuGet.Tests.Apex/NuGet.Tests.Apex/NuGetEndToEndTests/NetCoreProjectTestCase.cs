@@ -20,7 +20,7 @@ namespace NuGet.Tests.Apex
         }
 
         // basic create for .net core template
-        [NuGetWpfTheory(Skip = "https://github.com/NuGet/Home/issues/11308")]
+        [NuGetWpfTheory]
         [MemberData(nameof(GetNetCoreTemplates))]
         public void CreateNetCoreProject_RestoresNewProject(ProjectTemplate projectTemplate)
         {
@@ -120,7 +120,7 @@ namespace NuGet.Tests.Apex
             }
         }
 
-        [NuGetWpfTheory(Skip = "https://github.com/NuGet/Home/issues/11308")]
+        [NuGetWpfTheory]
         [MemberData(nameof(GetNetCoreTemplates))]
         public async Task WithSourceMappingEnabled_InstallAndUpdatePackageFromPMUIFromExpectedSource_Succeeds(ProjectTemplate projectTemplate)
         {
@@ -182,7 +182,7 @@ namespace NuGet.Tests.Apex
                     VisualStudio.ClearWindows();
 
                     // Act
-                    uiwindow.UpdatePackageFromUI(packageName, packageVersion2);                    
+                    uiwindow.UpdatePackageFromUI(packageName, packageVersion2);
 
                     // Assert
                     VisualStudio.AssertNuGetOutputDoesNotHaveErrors();
@@ -245,7 +245,7 @@ namespace NuGet.Tests.Apex
                     var uiwindow = nugetTestService.GetUIWindowfromProject(testContext.SolutionService.Projects[0]);
                     uiwindow.InstallPackageFromUI(packageName, packageVersion);
 
-                    // Assert                    
+                    // Assert
                     CommonUtility.AssertPackageReferenceDoesNotExist(VisualStudio, testContext.SolutionService.Projects[0], packageName, packageVersion, XunitLogger);
                 }
             }
