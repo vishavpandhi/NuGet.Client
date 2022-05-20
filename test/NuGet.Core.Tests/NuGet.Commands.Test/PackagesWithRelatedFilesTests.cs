@@ -1,14 +1,11 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using NuGet.Configuration;
 using NuGet.Frameworks;
 using NuGet.ProjectModel;
@@ -17,6 +14,7 @@ using Xunit;
 
 namespace NuGet.Commands.Test
 {
+    [CollectionDefinition(nameof(NotThreadSafeResourceCollection), DisableParallelization = true)]
     public class PackagesWithRelatedFilesTests
     {
         [Theory]
@@ -60,10 +58,14 @@ namespace NuGet.Commands.Test
                     LockFilePath = projectA.AssetsFileOutputPath
                 };
 
+                var originalOptInEnv = Environment.GetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE");
+                Environment.SetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE", "true");
                 // Act
                 var command = new RestoreCommand(request);
                 var result = await command.ExecuteAsync();
                 await result.CommitAsync(logger, CancellationToken.None);
+
+                Environment.SetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE", originalOptInEnv);
 
                 // Asert
                 Assert.True(result.Success);
@@ -133,10 +135,15 @@ namespace NuGet.Commands.Test
                     LockFilePath = projectA.AssetsFileOutputPath
                 };
 
+                var originalOptInEnv = Environment.GetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE");
+                Environment.SetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE", "true");
+
                 // Act
                 var command = new RestoreCommand(request);
                 var result = await command.ExecuteAsync();
                 await result.CommitAsync(logger, CancellationToken.None);
+
+                Environment.SetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE", originalOptInEnv);
 
                 // Asert
                 Assert.True(result.Success);
@@ -214,10 +221,15 @@ namespace NuGet.Commands.Test
                     LockFilePath = projectA.AssetsFileOutputPath
                 };
 
+                var originalOptInEnv = Environment.GetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE");
+                Environment.SetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE", "true");
+
                 // Act
                 var command = new RestoreCommand(request);
                 var result = await command.ExecuteAsync();
                 await result.CommitAsync(logger, CancellationToken.None);
+
+                Environment.SetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE", originalOptInEnv);
 
                 // Asert
                 Assert.True(result.Success);

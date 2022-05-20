@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NuGet.Common;
 using NuGet.Packaging;
 
 namespace NuGet.ContentModel
@@ -268,13 +269,16 @@ namespace NuGet.ContentModel
                     var contentItem = pathPattern.Match(path, definition.PropertyDefinitions);
                     if (contentItem != null)
                     {
-                        //If the item is assembly, populate the "related files extentions property".
-                        if (contentItem.Properties.ContainsKey("assembly"))
+                        if (IsRelatedFileEnabled())
                         {
-                            string relatedFileExtensionsProperty = GetRelatedFileExtensionProperty(contentItem, assets);
-                            if (relatedFileExtensionsProperty is not null)
+                            //If the item is assembly, populate the "related files extentions property".
+                            if (contentItem.Properties.ContainsKey("assembly"))
                             {
-                                contentItem.Properties.Add("related", relatedFileExtensionsProperty);
+                                string relatedFileExtensionsProperty = GetRelatedFileExtensionProperty(contentItem, assets);
+                                if (relatedFileExtensionsProperty is not null)
+                                {
+                                    contentItem.Properties.Add("related", relatedFileExtensionsProperty);
+                                }
                             }
                         }
                         itemsList.Add(contentItem);
@@ -284,6 +288,24 @@ namespace NuGet.ContentModel
             }
 
             return itemsList;
+        }
+
+        private bool IsRelatedFileEnabled()
+        {
+            IEnvironmentVariableReader _environmentVariableReader = EnvironmentVariableWrapper.Instance;
+            string relatedFileEnvVariable = _environmentVariableReader.GetEnvironmentVariable("DOTNET_NUGET_GENERATE_RELATEFILE");
+
+            if (!string.IsNullOrEmpty(relatedFileEnvVariable))
+            {
+                if (relatedFileEnvVariable.Equals(bool.TrueString.ToUpperInvariant(), StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return true;
+                }
+
+                // other values are unsupported
+                return false;
+            }
+            return false;
         }
 
         private string GetRelatedFileExtensionProperty(ContentItem contentItem, IEnumerable<Asset> assets)

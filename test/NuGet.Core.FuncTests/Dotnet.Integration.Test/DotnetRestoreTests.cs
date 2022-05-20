@@ -2395,10 +2395,15 @@ EndGlobal";
             }
         }
 
-        [Fact]
-        public async Task WhenPackageReferrenceHasRelatedFiles_RelatedPropertyIsApplied_Success()
+        [Theory]
+        [InlineData("True", true)]
+        [InlineData("true", true)]
+        //[InlineData("", false)]
+        //[InlineData("other", false)]
+        public async Task WhenPackageReferrenceHasRelatedFiles_RelatedPropertyIsApplied_Success(string envVarValue, bool optInRelatedFeature)
         {
             using var pathContext = _msbuildFixture.CreateSimpleTestPathContext();
+            var envVarName = "DOTNET_NUGET_GENERATE_RELATEFILE";
 
             // Set up solution, and project
             // projectA -> projectB -> packageX -> packageY
@@ -2451,7 +2456,15 @@ EndGlobal";
                     packageY);
 
             //Act
-            var result = _msbuildFixture.RunDotnet(pathContext.WorkingDirectory, $"restore {projectA.ProjectPath} -v n", ignoreExitCode: true);
+            CommandRunnerResult result = _msbuildFixture.RunDotnet(
+                pathContext.WorkingDirectory,
+                $"restore {projectA.ProjectPath} -v n",
+                ignoreExitCode: true,
+                additionalEnvVars: new Dictionary<string, string>()
+                        {
+                            { envVarName, envVarValue }
+                        }
+                 );
 
             // Assert
             result.Success.Should().BeTrue(because: result.AllOutput);
@@ -2460,29 +2473,49 @@ EndGlobal";
             Assert.NotNull(assetsFile);
             var targets = assetsFile.GetTarget(framework, null);
 
-            // packageX (top-level package reference): "related" property is applied correctly for Compile & Runtime
             var packageXLib = targets.Libraries.Single(x => x.Name.Equals("packageX"));
             var packageXCompile = packageXLib.CompileTimeAssemblies;
-            AssertRelatedProperty(packageXCompile, $"lib/net5.0/X.dll", ".xml");
             var packageXRuntime = packageXLib.RuntimeAssemblies;
-            AssertRelatedProperty(packageXRuntime, $"lib/net5.0/X.dll", ".xml");
 
-            // packageY (transitive package reference): "related" property is applied for Compile, Runtime and Embeded.
             var packageYLib = targets.Libraries.Single(x => x.Name.Equals("packageY"));
             var packageYCompile = packageYLib.CompileTimeAssemblies;
-            AssertRelatedProperty(packageYCompile, $"ref/net5.0/Y.dll", ".xml");
             var packageYRuntime = packageYLib.RuntimeAssemblies;
-            AssertRelatedProperty(packageYRuntime, $"lib/net5.0/Y.dll", ".pdb;.xml");
             var packageYEmbed = packageYLib.EmbedAssemblies;
-            AssertRelatedProperty(packageYEmbed, $"embed/net5.0/Y.dll", ".pdb");
 
-            // projectB (project reference): "related" property is NOT applied for Compile or Runtime.
             var projectBLib = targets.Libraries.Single(x => x.Name.Equals("projectB"));
             var projectBCompile = projectBLib.CompileTimeAssemblies;
-            AssertRelatedProperty(projectBCompile, $"bin/placeholder/projectB.dll", null);
             var projectBRuntime = projectBLib.RuntimeAssemblies;
-            AssertRelatedProperty(projectBRuntime, $"bin/placeholder/projectB.dll", null);
 
+            if (optInRelatedFeature)
+            {
+                // packageX (top-level package reference): "related" property is applied correctly for Compile & Runtime
+                AssertRelatedProperty(packageXCompile, $"lib/net5.0/X.dll", ".xml");
+                AssertRelatedProperty(packageXRuntime, $"lib/net5.0/X.dll", ".xml");
+
+                // packageY (transitive package reference): "related" property is applied for Compile, Runtime and Embeded.
+                AssertRelatedProperty(packageYCompile, $"ref/net5.0/Y.dll", ".xml");
+                AssertRelatedProperty(packageYRuntime, $"lib/net5.0/Y.dll", ".pdb;.xml");
+                AssertRelatedProperty(packageYEmbed, $"embed/net5.0/Y.dll", ".pdb");
+
+                // projectB (project reference): "related" property is NOT applied for Compile or Runtime.
+                AssertRelatedProperty(projectBCompile, $"bin/placeholder/projectB.dll", null);
+                AssertRelatedProperty(projectBRuntime, $"bin/placeholder/projectB.dll", null);
+            }
+            else
+            {
+                // packageX (top-level package reference): "related" property is NOT applied for Compile & Runtime
+                AssertRelatedProperty(packageXCompile, $"lib/net5.0/X.dll", null);
+                AssertRelatedProperty(packageXRuntime, $"lib/net5.0/X.dll", null);
+
+                // packageY (transitive package reference): "related" property is NOT applied for Compile, Runtime and Embeded.
+                AssertRelatedProperty(packageYCompile, $"ref/net5.0/Y.dll", null);
+                AssertRelatedProperty(packageYRuntime, $"lib/net5.0/Y.dll", null);
+                AssertRelatedProperty(packageYEmbed, $"embed/net5.0/Y.dll", null);
+
+                // projectB (project reference): "related" property is NOT applied for Compile or Runtime.
+                AssertRelatedProperty(projectBCompile, $"bin/placeholder/projectB.dll", null);
+                AssertRelatedProperty(projectBRuntime, $"bin/placeholder/projectB.dll", null);
+            }
         }
 
         private static SimpleTestPackageContext CreateNetstandardCompatiblePackage(string id, string version)
