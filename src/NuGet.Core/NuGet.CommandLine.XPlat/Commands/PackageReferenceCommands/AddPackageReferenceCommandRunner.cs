@@ -101,6 +101,7 @@ namespace NuGet.CommandLine.XPlat
             }
 
             var originalPackageSpec = matchingPackageSpecs.FirstOrDefault();
+            Console.Write(originalPackageSpec.RestoreMetadata.CentralPackageVersionsEnabled);
 
             // 2. Determine the version
 
