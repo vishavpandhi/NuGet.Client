@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo "Starting runFuncTests at `date -u +"%Y-%m-%dT%H:%M:%S"`"
-
+echo ".NET Channel arg: $1"
 env | sort
 
 while true ; do
@@ -66,30 +66,9 @@ CMD_LAST_LINE=${CMD_OUT_LINES[@]:(-1)}
 DOTNET_BRANCHES=${CMD_LAST_LINE//[[:space:]]}
 unset IFS
 
-IFS=$';'
-for DOTNET_BRANCH in ${DOTNET_BRANCHES[@]}
-do
-	echo $DOTNET_BRANCH
+echo "cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA  -nopath"
+cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA  -nopath
 
-	IFS=$':'
-	ChannelAndVersion=($DOTNET_BRANCH)
-	Channel=${ChannelAndVersion[0]}
-	if [ ${#ChannelAndVersion[@]} -eq 1 ]
-	then
-		Version="latest"
-	else
-		Version=${ChannelAndVersion[1]}
-	fi
-	unset IFS
-
-	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --quality GA --version $Version -nopath"
-    cli/dotnet-install.sh --install-dir cli --channel $Channel --quality GA --version $Version -nopath
-
-	if (( $? )); then
-		echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
-		exit 1
-	fi
-done
 
 # Display .NET CLI info
 $DOTNET --info

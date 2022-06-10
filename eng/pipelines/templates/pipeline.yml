@@ -67,7 +67,7 @@ stages:
     steps:
     - template: Initialize_Build.yml
 
-- stage: MacTests
+- stage: MacTests_NET6
   dependsOn:
   - Initialize
   condition: "and(succeeded(), eq(variables['RunTestsOnMac'], 'true'))"
@@ -82,7 +82,7 @@ stages:
     steps:
     - template: Tests_On_Mac.yml
 
-- stage: MacTests2
+- stage: MacTests_NET5
   dependsOn:
   - Initialize
   condition: "and(succeeded(), eq(variables['RunTestsOnMac'], 'true'))"
