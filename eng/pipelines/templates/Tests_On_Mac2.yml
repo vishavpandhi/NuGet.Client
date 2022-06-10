@@ -1,10 +1,10 @@
 steps:
 - task: ShellScript@2
   displayName: "Run Tests (stop on error)"
-  args: '5.0'
   continueOnError: "false"
   inputs:
     scriptPath: "scripts/funcTests/runFuncTests.sh"
+    args: '5.0'
     disableAutoCwd: "true"
     cwd: "$(Build.Repository.LocalPath)"
   condition: "and(succeeded(), not(eq(variables['IsOfficialBuild'], 'true')))"
