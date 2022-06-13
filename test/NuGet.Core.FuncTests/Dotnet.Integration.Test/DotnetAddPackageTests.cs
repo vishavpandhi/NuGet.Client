@@ -695,7 +695,7 @@ namespace Dotnet.Integration.Test
             File.WriteAllText(Path.Combine(projectADirectory, "Directory.Packages.props"), propsFile);
 
             //Act
-            var result = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX} -v {version}", ignoreExitCode: true);
+            var result = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX}", ignoreExitCode: true);
 
             // Assert
             Assert.Contains(@$"<ItemGroup>
