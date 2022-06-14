@@ -170,7 +170,6 @@ namespace NuGet.ProjectModel
         }
 
         private static void AddDependency(
-            PackageSpec spec,
             IList<LibraryDependency> list,
             string packageId,
             VersionRange range,
