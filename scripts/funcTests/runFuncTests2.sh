@@ -27,8 +27,8 @@ chmod +x cli/dotnet-install.sh
 echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
 cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
 
-echo "cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath"
-cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath
+echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath"
+cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath
 
 if (( $? )); then
 	echo "The .NET CLI Install failed!!"
@@ -52,6 +52,14 @@ CMD_OUT_LINES=(`dotnet msbuild build/config.props /v:m /nologo /t:GetCliBranchFo
 CMD_LAST_LINE=${CMD_OUT_LINES[@]:(-1)}
 DOTNET_BRANCHES=${CMD_LAST_LINE//[[:space:]]}
 unset IFS
+
+echo "cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath"
+cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath
+
+if (( $? )); then
+	echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
+	exit 1
+fi
 
 # Display .NET CLI info
 $DOTNET --info
@@ -115,7 +123,7 @@ fi
 
 echo "================== try to run a single test ==============="
 echo "cli/dotnet test $BUILD_REPOSITORY_LOCALPATH/test/NuGet.Core.Tests/NuGet.Common.Test/bin/Debug/net5.0/NuGet.Common.Test.dll --verbosity  detailed --blame-crash-collect-always"
-cli/dotnet test $BUILD_REPOSITORY_LOCALPATH/test/NuGet.Core.Tests/NuGet.Common.Test/bin/release/netcoreapp3.1/NuGet.Common.Test.dll --verbosity  detailed --logger "console;verbosity=detailed" --blame-crash --blame-crash-collect-always --diag:log.txt -f net5.0
+cli/dotnet test $BUILD_REPOSITORY_LOCALPATH/test/NuGet.Core.Tests/NuGet.Common.Test/bin/release/netcoreapp3.1/NuGet.Common.Test.dll --verbosity  detailed --logger "console;verbosity=detailed" --blame-crash --blame-crash-collect-always --diag:log.txt
 echo "single test exitcode is $?"
 
 echo "Core tests finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
