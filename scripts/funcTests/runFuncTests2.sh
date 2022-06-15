@@ -61,15 +61,6 @@ CMD_LAST_LINE=${CMD_OUT_LINES[@]:(-1)}
 DOTNET_BRANCHES=${CMD_LAST_LINE//[[:space:]]}
 unset IFS
 
-echo "cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath"
-cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath
-
-if (( $? )); then
-	echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
-	exit 1
-fi
-
-
 # Display .NET CLI info
 $DOTNET --info
 echo "The exitcode for $DOTNET --info is $?"
