@@ -14,7 +14,7 @@ steps:
     echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
     cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
 
-    # Install .NET 3.1 runtime
+    # Install .NET 5.0 runtime
     echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath"
     cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath
 
@@ -35,6 +35,12 @@ steps:
 
     echo "$DOTNET test ./test/NuGet.Core.Tests/NuGet.Resolver.Test/bin/Debug/netcoreapp3.1/NuGet.Resolver.Test.dll"
     $DOTNET test ./test/NuGet.Core.Tests/NuGet.Resolver.Test/bin/Debug/netcoreapp3.1/NuGet.Resolver.Test.dll
+
+    echo "$DOTNET build ./test/NuGet.Core.Tests/NuGet.Common.Test/NuGet.Common.Test.csproj"
+    $DOTNET build ./test/NuGet.Core.Tests/NuGet.Common.Test/NuGet.Common.Test.csproj
+
+    echo "$DOTNET test ./test/NuGet.Core.Tests/NuGet.Common.Test/bin/Debug/netcoreapp3.1/NuGet.Common.Test.dll"
+    $DOTNET test ./test/NuGet.Core.Tests/NuGet.Common.Test/bin/Debug/netcoreapp3.1/NuGet.Common.Test.dll
 
 # - task: PublishBuildArtifacts@1
 #   displayName: "Publish log"

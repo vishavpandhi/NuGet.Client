@@ -1,39 +1,50 @@
 steps:
-- task: ShellScript@2
-  displayName: "Run Tests (stop on error)"
-  continueOnError: "false"
-  inputs:
-    scriptPath: "scripts/funcTests/runFuncTests2.sh"
-    args: '5.0'
-    disableAutoCwd: "true"
-    cwd: "$(Build.Repository.LocalPath)"
-  condition: "and(succeeded(), not(eq(variables['IsOfficialBuild'], 'true')))"
-
 - script: |
     cd $BUILD_REPOSITORY_LOCALPATH
-    echo "$BUILD_REPOSITORY_LOCALPATH/cli/dotnet test $BUILD_REPOSITORY_LOCALPATH/test/NuGet.Core.Tests/NuGet.Common.Test/bin/Debug/netcoreapp3.1/NuGet.Common.Test.dll --verbosity  detailed"
-    ./cli/dotnet test ./test/NuGet.Core.Tests/NuGet.Common.Test/bin/release/netcoreapp3.1/NuGet.Common.Test.dll --blame-crash-collect-always
-    echo "single test exitcode is $?"
-    cd /var/log
-    echo "==== ls ====="
-    ls -l
-    echo "==== ls -l system.log* ====="
-    ls -l system.log*
-    echo "==== tail system.log ====="
-    tail system.log
-    cd $BUILD_REPOSITORY_LOCALPATH
-    mkdir log
-    cp /var/log/system.log*  $BUILD_REPOSITORY_LOCALPATH/log
-    echo "==== ls -l $BUILD_REPOSITORY_LOCALPATH/log ====="
-    ls -l $BUILD_REPOSITORY_LOCALPATH/log
+    # Download the CLI install script to cli
+    echo "Installing dotnet CLI"
+    mkdir -p cli
+    curl -o cli/dotnet-install.sh -L https://dot.net/v1/dotnet-install.sh
 
-- task: PublishBuildArtifacts@1
-  displayName: "Publish log"
-  inputs:
-    PathtoPublish: "$(Build.Repository.LocalPath)/log"
-    ArtifactName: "$(Agent.JobName)"
-    ArtifactType: "Container"
-  condition: "succeededOrFailed()"
+    # Run install.sh
+    chmod +x cli/dotnet-install.sh
+
+    # Get recommended version for bootstrapping testing version
+    # Install .NET 3.1 runtime
+    echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
+    cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
+
+    # Disable .NET CLI Install Lookup
+    DOTNET_MULTILEVEL_LOOKUP=0
+
+    DOTNET="$(pwd)/cli/dotnet"
+
+    echo "cli/dotnet-install.sh --install-dir cli --channel 6.0.4xx --quality signed -nopath"
+    cli/dotnet-install.sh --install-dir cli --channel 6.0.4xx --quality signed -nopath
+
+    # Let the dotnet cli expand and decompress first if it's a first-run
+    $DOTNET --info
+
+    cd $BUILD_REPOSITORY_LOCALPATH
+    echo "$DOTNET build ./test/NuGet.Core.Tests/NuGet.Resolver.Test/NuGet.Resolver.Test.csproj"
+    $DOTNET build ./test/NuGet.Core.Tests/NuGet.Resolver.Test/NuGet.Resolver.Test.csproj
+
+    echo "$DOTNET test ./test/NuGet.Core.Tests/NuGet.Resolver.Test/bin/Debug/netcoreapp3.1/NuGet.Resolver.Test.dll"
+    $DOTNET test ./test/NuGet.Core.Tests/NuGet.Resolver.Test/bin/Debug/netcoreapp3.1/NuGet.Resolver.Test.dll
+
+    echo "$DOTNET build ./test/NuGet.Core.Tests/NuGet.Common.Test/NuGet.Common.Test.csproj"
+    $DOTNET build ./test/NuGet.Core.Tests/NuGet.Common.Test/NuGet.Common.Test.csproj
+
+    echo "$DOTNET test ./test/NuGet.Core.Tests/NuGet.Common.Test/bin/Debug/netcoreapp3.1/NuGet.Common.Test.dll"
+    $DOTNET test ./test/NuGet.Core.Tests/NuGet.Common.Test/bin/Debug/netcoreapp3.1/NuGet.Common.Test.dll
+
+# - task: PublishBuildArtifacts@1
+#   displayName: "Publish log"
+#   inputs:
+#     PathtoPublish: "$(Build.Repository.LocalPath)/log"
+#     ArtifactName: "$(Agent.JobName)"
+#     ArtifactType: "Container"
+#   condition: "succeededOrFailed()"
 
 - task: PublishTestResults@2
   displayName: "Publish Test Results"
