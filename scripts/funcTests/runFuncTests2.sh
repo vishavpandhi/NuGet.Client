@@ -32,11 +32,11 @@ if (( $? )); then
 	exit 1
 fi
 
-echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
-cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
-
 echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath"
 cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath
+
+echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
+cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
 
 if (( $? )); then
 	echo "The .NET CLI Install failed!!"
