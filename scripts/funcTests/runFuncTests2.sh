@@ -64,6 +64,8 @@ fi
 
 # Display .NET CLI info
 $DOTNET --info
+echo "The exitcode for $DOTNET --info is $?"
+
 
 echo "initial dotnet cli install finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
 
