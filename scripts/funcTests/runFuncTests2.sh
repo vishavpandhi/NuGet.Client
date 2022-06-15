@@ -113,7 +113,7 @@ echo "Restore finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
 
 # Unit tests
 echo "dotnet msbuild build/build.proj /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:BuildNumber=1 /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/03.CoreUnitTests.binlog"
-dotnet msbuild build/build.proj /t:CoreUnitTests /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:BuildNumber=1 /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/03.CoreUnitTests.binlog
+dotnet msbuild build/build.proj /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:BuildNumber=1 /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/03.CoreUnitTests.binlog
 
 echo "CoreUnitTests failed!! exitcode is $?"
 if [ $? -ne 0 ]; then
