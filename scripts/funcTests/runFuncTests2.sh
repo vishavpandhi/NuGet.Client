@@ -24,6 +24,14 @@ chmod +x cli/dotnet-install.sh
 
 # Get recommended version for bootstrapping testing version
 
+echo "cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath"
+cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath
+
+if (( $? )); then
+	echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
+	exit 1
+fi
+
 echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
 cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
 
