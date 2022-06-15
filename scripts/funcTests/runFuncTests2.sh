@@ -27,8 +27,8 @@ chmod +x cli/dotnet-install.sh
 echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
 cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
 
-echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath"
-cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath
+echo "cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath"
+cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath
 
 if (( $? )); then
 	echo "The .NET CLI Install failed!!"
@@ -52,9 +52,6 @@ CMD_OUT_LINES=(`dotnet msbuild build/config.props /v:m /nologo /t:GetCliBranchFo
 CMD_LAST_LINE=${CMD_OUT_LINES[@]:(-1)}
 DOTNET_BRANCHES=${CMD_LAST_LINE//[[:space:]]}
 unset IFS
-
-echo "cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath"
-cli/dotnet-install.sh --install-dir cli --channel $1 --quality GA -nopath
 
 if (( $? )); then
 	echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
