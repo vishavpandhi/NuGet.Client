@@ -123,7 +123,7 @@ fi
 
 echo "================== try to run a single test ==============="
 echo "cli/dotnet test $BUILD_REPOSITORY_LOCALPATH/test/NuGet.Core.Tests/NuGet.Common.Test/bin/Debug/net5.0/NuGet.Common.Test.dll --verbosity  detailed --blame-crash-collect-always"
-cli/dotnet test $BUILD_REPOSITORY_LOCALPATH/test/NuGet.Core.Tests/NuGet.Common.Test/bin/release/netcoreapp3.1/NuGet.Common.Test.dll --verbosity  detailed --logger "console;verbosity=detailed" --blame-crash --blame-crash-collect-always --diag:$(Build.Repository.LocalPath)/log/log1.txt
+cli/dotnet test $BUILD_REPOSITORY_LOCALPATH/test/NuGet.Core.Tests/NuGet.Common.Test/bin/release/netcoreapp3.1/NuGet.Common.Test.dll --verbosity  detailed --logger "console;verbosity=detailed" --blame-crash --blame-crash-collect-always --diag:$BUILD_REPOSITORY_LOCALPATH/log/log1.txt
 echo "single test exitcode is $?"
 
 echo "Core tests finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
