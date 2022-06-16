@@ -25,6 +25,7 @@ namespace NuGet.CommandLine.XPlat
         private const string PACKAGE_REFERENCE_TYPE_TAG = "PackageReference";
         private const string PACKAGE_VERSION_TYPE_TAG = "PackageVersion";
         private const string VERSION_TAG = "Version";
+        private const string VERSION_OVERRIDE_TAG = "VersionOverride";
         private const string FRAMEWORK_TAG = "TargetFramework";
         private const string FRAMEWORKS_TAG = "TargetFrameworks";
         private const string RESTORE_STYLE_TAG = "RestoreProjectStyle";
@@ -482,6 +483,21 @@ namespace NuGet.CommandLine.XPlat
                     libraryDependency.Name,
                     Environment.NewLine,
                     errors));
+            }
+        }
+
+        private void UpdateExtraMetadata(LibraryDependency libraryDependency, ProjectItem packageReferenceItem)
+        {
+            if (libraryDependency.IncludeType != LibraryIncludeFlags.All)
+            {
+                var includeFlags = MSBuildStringUtility.Convert(LibraryIncludeFlagUtils.GetFlagString(libraryDependency.IncludeType));
+                packageReferenceItem.SetMetadataValue(IncludeAssets, includeFlags);
+            }
+
+            if (libraryDependency.SuppressParent != LibraryIncludeFlagUtils.DefaultSuppressParent)
+            {
+                var suppressParent = MSBuildStringUtility.Convert(LibraryIncludeFlagUtils.GetFlagString(libraryDependency.SuppressParent));
+                packageReferenceItem.SetMetadataValue(PrivateAssets, suppressParent);
             }
         }
 
