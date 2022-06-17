@@ -486,6 +486,11 @@ namespace NuGet.CommandLine.XPlat
             }
         }
 
+        /// <summary>
+        /// Update other metadata for items based on certain flags.
+        /// </summary>
+        /// <param name="libraryDependency">Package Dependency of the package to be added.</param>
+        /// <param name="packageReferenceItem">Item to be modified.</param>
         private void UpdateExtraMetadata(LibraryDependency libraryDependency, ProjectItem packageReferenceItem)
         {
             if (libraryDependency.IncludeType != LibraryIncludeFlags.All)
