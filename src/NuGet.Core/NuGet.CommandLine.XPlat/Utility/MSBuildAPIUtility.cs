@@ -25,7 +25,6 @@ namespace NuGet.CommandLine.XPlat
         private const string PACKAGE_REFERENCE_TYPE_TAG = "PackageReference";
         private const string PACKAGE_VERSION_TYPE_TAG = "PackageVersion";
         private const string VERSION_TAG = "Version";
-        private const string VERSION_OVERRIDE_TAG = "VersionOverride";
         private const string FRAMEWORK_TAG = "TargetFramework";
         private const string FRAMEWORKS_TAG = "TargetFrameworks";
         private const string RESTORE_STYLE_TAG = "RestoreProjectStyle";
@@ -449,6 +448,7 @@ namespace NuGet.CommandLine.XPlat
             // Update the version
             versionAttribute.Value = versionCLIArgumet;
         }
+        */
 
         /// <summary>
         /// Validate that no imported items in the project are updated with the package version.
