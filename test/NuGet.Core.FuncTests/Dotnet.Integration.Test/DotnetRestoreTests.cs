@@ -689,7 +689,7 @@ EndGlobal";
                 using (var stream = File.Open(projectFile1, FileMode.Open, FileAccess.ReadWrite))
                 {
                     var xml = XDocument.Load(stream);
-                    ProjectFileUtils.SetTargetFrameworkForProject(xml, "TargetFrameworks", "net45");
+                    ProjectFileUtils.SetTargetFrameworkForProject(xml, "TargetFrameworks", "net48");
 
                     var attributes = new Dictionary<string, string>() { { "Version", "1.0.0" } };
 
@@ -738,14 +738,14 @@ EndGlobal";
                 var result = _msbuildFixture.RunDotnet(pathContext.SolutionRoot, arguments, ignoreExitCode: true);
 
                 // Assert
-                Assert.True(result.ExitCode == 0);
+                Assert.True(result.ExitCode == 0, result.AllOutput);
                 Assert.True(2 == result.AllOutput.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Length, result.AllOutput);
 
                 // Act - make sure no-op does the same thing.
                 result = _msbuildFixture.RunDotnet(pathContext.SolutionRoot, arguments, ignoreExitCode: true);
 
                 // Assert
-                Assert.True(result.ExitCode == 0);
+                Assert.True(result.ExitCode == 0, result.AllOutput);
                 Assert.True(2 == result.AllOutput.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Length, result.AllOutput);
 
             }
@@ -913,7 +913,7 @@ EndGlobal";
                 string projectFileContents =
 @"<Project Sdk=""Microsoft.NET.Sdk"">
     <PropertyGroup>
-        <TargetFrameworks>net5.0;net5.0-windows</TargetFrameworks>
+        <TargetFrameworks>net6.0;net6.0-windows</TargetFrameworks>
     </PropertyGroup>
 </Project>";
                 File.WriteAllText(Path.Combine(pathContext.SolutionRoot, "a.csproj"), projectFileContents);
@@ -929,8 +929,8 @@ EndGlobal";
                 // Assert
                 PackagesLockFile lockFile = PackagesLockFileFormat.Read(lockFilePath);
                 Assert.Equal(2, lockFile.Targets.Count);
-                Assert.Contains(lockFile.Targets, target => target.TargetFramework == FrameworkConstants.CommonFrameworks.Net50);
-                NuGetFramework net5win7 = NuGetFramework.Parse("net5.0-windows7.0");
+                Assert.Contains(lockFile.Targets, target => target.TargetFramework == FrameworkConstants.CommonFrameworks.Net60);
+                NuGetFramework net5win7 = NuGetFramework.Parse("net6.0-windows7.0");
                 Assert.Contains(lockFile.Targets, target => target.TargetFramework == net5win7);
             }
         }
@@ -1115,7 +1115,7 @@ EndGlobal";
                 }
                 projectRoot.Save();
                 var solutionPath = Path.Combine(pathContext.SolutionRoot, "solution.sln");
-                _msbuildFixture.RunDotnet(pathContext.SolutionRoot, $"new sln {solutionPath}");
+                _msbuildFixture.RunDotnet(pathContext.SolutionRoot, $"new sln -n solution");
 
                 foreach (var child in projects.Values)
                 {
@@ -1593,7 +1593,6 @@ EndGlobal";
         [InlineData("webapp")]
         [InlineData("angular")]
         [InlineData("react")]
-        [InlineData("reactredux")]
         [InlineData("webapi")]
         [InlineData("grpc")]
         public void Dotnet_New_Template_Restore_Success(string template)
@@ -2048,7 +2047,7 @@ EndGlobal";
 
             var configFile = @$"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
-    <packageSources>        
+    <packageSources>
         <add key=""source2"" value=""{packageSource2.FullName}"" />
     </packageSources>
         <packageSourceMapping>
@@ -2119,7 +2118,7 @@ EndGlobal";
 
             var configFile = @$"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
-    <packageSources>        
+    <packageSources>
         <add key=""source2"" value=""{packageSource2.FullName}"" />
     </packageSources>
         <packageSourceMapping>
@@ -2151,6 +2150,210 @@ EndGlobal";
             pkgX.Files.Clear();
             pkgX.AddFile($"lib/netstandard2.0/x.dll");
             return pkgX;
+        }
+
+        [Fact]
+        public async Task DotnetRestore_CentralPackageVersionManagement_NoOps()
+        {
+            using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
+            {
+                var testDirectory = pathContext.SolutionRoot;
+                var pkgX = new SimpleTestPackageContext("x", "1.0.0");
+                await SimpleTestPackageUtility.CreatePackagesAsync(pathContext.PackageSource, pkgX);
+
+                var projectName1 = "ClassLibrary1";
+                var workingDirectory1 = Path.Combine(testDirectory, projectName1);
+                var projectFile1 = Path.Combine(workingDirectory1, $"{projectName1}.csproj");
+                _msbuildFixture.CreateDotnetNewProject(testDirectory, projectName1, " classlib");
+
+                using (var stream = File.Open(projectFile1, FileMode.Open, FileAccess.ReadWrite))
+                {
+                    var xml = XDocument.Load(stream);
+                    ProjectFileUtils.SetTargetFrameworkForProject(xml, "TargetFrameworks", "net6.0");
+                    ProjectFileUtils.AddProperty(xml, "ManagePackageVersionsCentrally", "true");
+
+                    ProjectFileUtils.AddItem(
+                        xml,
+                        "PackageReference",
+                        "x",
+                        framework: "",
+                        new Dictionary<string, string>(),
+                        new Dictionary<string, string>());
+
+                    ProjectFileUtils.WriteXmlToFile(xml, stream);
+                }
+
+                var packagesFile = Path.Combine(testDirectory, "Directory.Packages.props");
+                await File.WriteAllTextAsync(packagesFile, "<Project><ItemGroup></ItemGroup></Project>");
+
+                using (var stream = File.Open(packagesFile, FileMode.Open, FileAccess.ReadWrite))
+                {
+                    var xml = XDocument.Load(stream);
+                    ProjectFileUtils.AddItem(
+                        xml,
+                        "PackageVersion",
+                        "x",
+                        framework: "",
+                        new Dictionary<string, string>(),
+                        new Dictionary<string, string>() { { "Version", "1.0.0" } });
+
+                    ProjectFileUtils.WriteXmlToFile(xml, stream);
+                }
+
+                // Preconditions
+                var command = $"restore {projectFile1} {$"--source \"{pathContext.PackageSource}\" /p:AutomaticallyUseReferenceAssemblyPackages=false"}";
+                var result = _msbuildFixture.RunDotnet(pathContext.SolutionRoot, command, ignoreExitCode: true);
+
+                result.ExitCode.Should().Be(0, because: result.AllOutput);
+                var assetsFilePath = Path.Combine(workingDirectory1, "obj", "project.assets.json");
+                File.Exists(assetsFilePath).Should().BeTrue(because: "The assets file needs to exist");
+                var assetsFile = new LockFileFormat().Read(assetsFilePath);
+                LockFileTarget target = assetsFile.Targets.Single(e => e.TargetFramework.Equals(NuGetFramework.Parse("net6.0")) && string.IsNullOrEmpty(e.RuntimeIdentifier));
+                target.Libraries.Should().ContainSingle(e => e.Name.Equals("x"));
+
+                // Act another restore
+                result = _msbuildFixture.RunDotnet(pathContext.SolutionRoot, command, ignoreExitCode: true);
+
+                // Ensure restore no-ops
+                result.ExitCode.Should().Be(0, because: result.AllOutput);
+                result.AllOutput.Should().Contain("All projects are up-to-date for restore.");
+            }
+        }
+
+        [PlatformTheory(Platform.Windows)]
+        // [InlineData(true)] - Disabled static graph tests due to https://github.com/NuGet/Home/issues/11761.
+        [InlineData(false)]
+        public async Task DotnetRestore_WithMultiTargetingProject_WhenTargetFrameworkIsSpecifiedOnTheCommandline_RestoresForSingleFramework(bool useStaticGraphEvaluation)
+        {
+            // Arrange
+            using var pathContext = _msbuildFixture.CreateSimpleTestPathContext();
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(pathContext.PackageSource, new SimpleTestPackageContext("x", "1.0.0"));
+
+            string projectFileContents =
+@"<Project Sdk=""Microsoft.NET.Sdk"">
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Condition=""'$(TargetFramework)' == 'net6.0'"" Include=""x"" Version=""1.0.0"" />
+        <PackageReference Condition=""'$(TargetFramework)' == 'netstandard2.1'"" Include=""DoesNotExist"" Version=""1.0.0"" />
+    </ItemGroup>
+</Project>";
+            File.WriteAllText(Path.Combine(pathContext.SolutionRoot, "a.csproj"), projectFileContents);
+
+            // Act
+            var additionalArgs = useStaticGraphEvaluation ? "/p:RestoreUseStaticGraphEvaluation=true" : string.Empty;
+            var result = _msbuildFixture.RunDotnet(pathContext.SolutionRoot, args: $"restore a.csproj {additionalArgs} /p:TargetFramework=\"net6.0\"", ignoreExitCode: true);
+
+            // Assert
+            result.Success.Should().BeTrue(because: result.AllOutput);
+            var assetsFilePath = Path.Combine(pathContext.SolutionRoot, "obj", LockFileFormat.AssetsFileName);
+            var format = new LockFileFormat();
+            LockFile assetsFile = format.Read(assetsFilePath);
+
+            var targetsWithoutARuntime = assetsFile.Targets.Where(e => string.IsNullOrEmpty(e.RuntimeIdentifier));
+            targetsWithoutARuntime.Count().Should().Be(1, because: "Expected that only the framework passed in as a global property is restored.");
+            var net50Target = targetsWithoutARuntime.Single();
+
+            net50Target.Libraries.Should().HaveCount(1);
+            net50Target.Libraries.Single().Name.Should().Be("x");
+        }
+
+        [PlatformTheory(Platform.Windows)]
+        // [InlineData(true)] - Disabled static graph tests due to https://github.com/NuGet/Home/issues/11761.
+        [InlineData(false)]
+        public async Task DotnetRestore_WithMultiTargetingProject_WhenTargetFrameworkIsSpecifiedOnTheCommandline_AndPerFrameworkProjectReferencesAreUsed_RestoresForSingleFramework(bool useStaticGraphEvaluation)
+        {
+            // Arrange
+            using var pathContext = _msbuildFixture.CreateSimpleTestPathContext();
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(pathContext.PackageSource, new SimpleTestPackageContext("x", "1.0.0"));
+            var projectAWorkingDirectory = Path.Combine(pathContext.SolutionRoot, "a");
+            var projectBWorkingDirectory = Path.Combine(pathContext.SolutionRoot, "b");
+            Directory.CreateDirectory(projectAWorkingDirectory);
+            Directory.CreateDirectory(projectBWorkingDirectory);
+            var projectAPath = Path.Combine(projectAWorkingDirectory, "a.csproj");
+            var projectBPath = Path.Combine(projectBWorkingDirectory, "b.csproj");
+            string projectAFileContents =
+@$"<Project Sdk=""Microsoft.NET.Sdk"">
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Condition=""'$(TargetFramework)' == 'net6.0'"" Include=""..\b\b.csproj"" Version=""1.0.0"" />
+    </ItemGroup>
+</Project>";
+            string projectBFileContents =
+@$"<Project Sdk=""Microsoft.NET.Sdk"">
+    <PropertyGroup>
+        <TargetFrameworks>net6.0</TargetFrameworks>
+    </PropertyGroup>
+</Project>";
+            File.WriteAllText(projectAPath, projectAFileContents);
+            File.WriteAllText(projectBPath, projectBFileContents);
+
+            // Act
+            var additionalArgs = useStaticGraphEvaluation ? "/p:RestoreUseStaticGraphEvaluation=true" : string.Empty;
+            var result = _msbuildFixture.RunDotnet(projectAWorkingDirectory, args: $"restore a.csproj /p:TargetFramework=\"net6.0\" /p:RestoreRecursive=\"false\" {additionalArgs}", ignoreExitCode: true);
+
+            // Assert
+            result.Success.Should().BeTrue(because: result.AllOutput);
+            var assetsFilePath = Path.Combine(projectAWorkingDirectory, "obj", LockFileFormat.AssetsFileName);
+            var format = new LockFileFormat();
+            LockFile assetsFile = format.Read(assetsFilePath);
+
+            var targetsWithoutARuntime = assetsFile.Targets.Where(e => string.IsNullOrEmpty(e.RuntimeIdentifier));
+            targetsWithoutARuntime.Count().Should().Be(1, because: "Expected that only the framework passed in as a global property is restored.");
+            var net60Target = targetsWithoutARuntime.Single();
+
+            net60Target.Libraries.Should().HaveCount(1);
+            net60Target.Libraries.Single().Name.Should().Be("b");
+        }
+
+        [PlatformTheory(Platform.Windows)]
+        // [InlineData(true)] - Disabled static graph tests due to https://github.com/NuGet/Home/issues/11761.
+        [InlineData(false)]
+        public async Task DotnetRestore_WithMultiTargettingProject_WhenTargetFrameworkIsSpecifiedOnTheCommandline_PerFrameworkProjectReferencesAreUsed_RestoresForSingleFramework(bool useStaticGraphEvaluation)
+        {
+            // Arrange
+            using var pathContext = _msbuildFixture.CreateSimpleTestPathContext();
+            var additionalSource = Path.Combine(pathContext.SolutionRoot, "additionalSource");
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(additionalSource, new SimpleTestPackageContext("x", "1.0.0"));
+
+            string projectFileContents =
+@$"<Project Sdk=""Microsoft.NET.Sdk"">
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
+        <RestoreAdditionalProjectSources Condition=""'$(TargetFramework)' == 'net6.0'"">{additionalSource}</RestoreAdditionalProjectSources>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Condition=""'$(TargetFramework)' == 'net6.0'"" Include=""x"" Version=""1.0.0"" />
+        <PackageReference Condition=""'$(TargetFramework)' == 'netstandard2.1'"" Include=""DoesNotExist"" Version=""1.0.0"" />
+    </ItemGroup>
+</Project>";
+            File.WriteAllText(Path.Combine(pathContext.SolutionRoot, "a.csproj"), projectFileContents);
+
+            // Act
+            var additionalArgs = useStaticGraphEvaluation ? "/p:RestoreUseStaticGraphEvaluation=true" : string.Empty;
+            var result = _msbuildFixture.RunDotnet(pathContext.SolutionRoot, args: $"restore a.csproj /p:TargetFramework=\"net6.0\" {additionalArgs}", ignoreExitCode: true);
+
+            // Assert
+            result.Success.Should().BeTrue(because: result.AllOutput);
+            var assetsFilePath = Path.Combine(pathContext.SolutionRoot, "obj", LockFileFormat.AssetsFileName);
+            var format = new LockFileFormat();
+            LockFile assetsFile = format.Read(assetsFilePath);
+
+            var targetsWithoutARuntime = assetsFile.Targets.Where(e => string.IsNullOrEmpty(e.RuntimeIdentifier));
+            targetsWithoutARuntime.Count().Should().Be(1, because: "Expected that only the framework passed in as a global property is restored.");
+            var net50Target = targetsWithoutARuntime.Single();
+
+            net50Target.Libraries.Should().HaveCount(1);
+            net50Target.Libraries.Single().Name.Should().Be("x");
+            assetsFile.PackageSpec.RestoreMetadata.Sources.Select(e => e.Source).Should().Contain(additionalSource);
+
+            var condition = @"<ItemGroup Condition="" '$(TargetFramework)' == 'net6.0' AND '$(ExcludeRestorePackageImports)' != 'true' "">";
+            var targetsFilePath = Path.Combine(pathContext.SolutionRoot, "obj", "a.csproj.nuget.g.props");
+            var allTargets = File.ReadAllText(targetsFilePath);
+            allTargets.Should().Contain(condition);
         }
     }
 }
