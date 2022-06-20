@@ -222,7 +222,7 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: Use NuGet 6.x
   inputs:
-    versionSpec: ">=6.0"
+    versionSpec: ">=5.0"
     checkLatest: true
 
 - task: NuGetCommand@2
