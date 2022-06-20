@@ -448,7 +448,6 @@ namespace NuGet.CommandLine.XPlat
             // Update the version
             versionAttribute.Value = versionCLIArgumet;
         }
-        */
 
         /// <summary>
         /// Validate that no imported items in the project are updated with the package version.

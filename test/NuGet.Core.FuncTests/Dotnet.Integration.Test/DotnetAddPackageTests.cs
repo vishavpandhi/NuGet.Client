@@ -719,12 +719,12 @@ namespace Dotnet.Integration.Test
             const string packageX = "X";
 
             var packageFrameworks = "net5.0";
-            var packageX100 = XPlatTestUtils.CreatePackage(packageX, version, frameworkString: packageFrameworks);
+            var packageX200 = XPlatTestUtils.CreatePackage(packageX, version, frameworkString: packageFrameworks);
 
             await SimpleTestPackageUtility.CreateFolderFeedV3Async(
                     pathContext.PackageSource,
                     PackageSaveMode.Defaultv3,
-                    packageX100);
+                    packageX200);
 
             var propsFile = @$"<Project>
                                 <PropertyGroup>
