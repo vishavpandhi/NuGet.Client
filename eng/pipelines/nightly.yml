@@ -18,7 +18,7 @@ stages:
     pool:
       vmImage: windows-latest
     steps:
-    - template: Initialize_Build_SemanticVersion.yml
+    - template: templates/Initialize_Build_SemanticVersion.yml
 
   - job: Initialize_Build
     dependsOn: GetSemanticVersion
