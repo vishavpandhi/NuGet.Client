@@ -1,26 +1,26 @@
-parameters:
-- name: DartLabEnvironment
-  displayName: DartLab Environment
-  type: string
-  default: Production
-  values:
-  - Production
-  - Staging
-  
+
 resources:
   pipelines:
-  - pipeline: DartLab
-    source: DartLab
-    branch: main
-  - pipeline: NuGet
-    source: NuGet.Client-PrivateDev
-  repositories:
-  - repository: DartLabTemplates
-    type: git
-    name: DartLab.Templates
-    ref: refs/heads/main
+  - pipeline: nugetclientofficial
+    source: NuGet.Client-Official
+    trigger:
+        branches:
+          - dev
 
-steps:
-  - download: NuGet
-    artifact: MicroBuildOutputs
-  - bash: echo "bootstrapperUrl is :$(resources.pipeline.Nuget.bootstrapperUrl)"
+jobs:
+  - job:
+    displayName: Get URL
+
+    steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: "Download symbols - NonRTM artifact"
+        inputs:
+          source: specific
+          project: "devdiv"
+          pipeline: NuGet.Client-Official
+          artifact: "symbols - NonRTM"
+          path: $(Pipeline.Workspace)\symbols\NonRTM
+  - job: 
+    displayName: Bash URL
+    steps:
+      - bash: echo "url:$(resources.pipeline.nugetclientofficial)"
