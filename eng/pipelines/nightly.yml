@@ -1,3 +1,12 @@
+parameters:
+- name: DartLabEnvironment
+  displayName: DartLab Environment
+  type: string
+  default: Production
+  values:
+  - Production
+  - Staging
+  
 resources:
   pipelines:
   - pipeline: DartLab
