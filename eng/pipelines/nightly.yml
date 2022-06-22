@@ -49,7 +49,7 @@ stages:
     pool:
       name: VSEngSS-MicroBuild2022-1ES
     steps:
-    - template: Build_and_UnitTest.yml
+    - template: templates/Build_and_UnitTest.yml
       parameters:
         BuildRTM: false
 
