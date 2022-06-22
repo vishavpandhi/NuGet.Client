@@ -29,7 +29,7 @@ stages:
     pool:
       vmImage: windows-latest
     steps:
-    - template: Initialize_Build.yml
+    - template: templates/Initialize_Build.yml
 
 - stage: Build_Insertable
   displayName: Build NuGet inserted into VS and .NET SDK
