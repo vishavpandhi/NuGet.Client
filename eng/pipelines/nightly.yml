@@ -17,10 +17,11 @@ jobs:
         inputs:
           source: specific
           project: "devdiv"
-          pipeline: NuGet.Client-Official
+          pipeline: "NuGet.Client-Official"
           artifact: "symbols - NonRTM"
           path: $(Pipeline.Workspace)\symbols\NonRTM
   - job: 
     displayName: Bash URL
     steps:
-      - bash: echo "url:$(resources.pipeline.nugetclientofficial)"
+      - bash: echo "$(Build.Repository.LocalPath)"
+      - bash: echo "$(resources.pipeline)"
