@@ -616,7 +616,7 @@ namespace Dotnet.Integration.Test
         }
 
         [Fact]
-        public async Task AddPkg_WhenProjectOnboardedToCPMAndNoPackagesExistInProps()
+        public async Task AddPkgWithNoVersion_WhenProjectOnboardedToCPMAndNoPackagesExistInProps()
         {
             using var pathContext = new SimpleTestPathContext();
 
@@ -661,7 +661,7 @@ namespace Dotnet.Integration.Test
         }
 
         [Fact]
-        public async Task AddPkg_WhenProjectOnboardedToCPMAndPackagesExistInProps()
+        public async Task AddPkgWithVersion_WhenProjectOnboardedToCPMAndNoPackagesExistInProps()
         {
             using var pathContext = new SimpleTestPathContext();
 
@@ -685,54 +685,6 @@ namespace Dotnet.Integration.Test
                                 <PropertyGroup>
                                 <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
                                 </PropertyGroup>
-                                <ItemGroup>
-                                <PackageVersion Include=""Y"" Version=""1.0.0"" />
-                                </ItemGroup>
-                            </Project>
-                            ";
-
-            solution.Projects.Add(projectA);
-            solution.Create(pathContext.SolutionRoot);
-
-            var projectADirectory = Path.Combine(pathContext.SolutionRoot, projectA.ProjectName);
-            File.WriteAllText(Path.Combine(projectADirectory, "Directory.Packages.props"), propsFile);
-
-            //Act
-            var result = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX}", ignoreExitCode: true);
-
-            // Assert
-            Assert.Contains(@$"<PackageVersion Include=""X"" Version=""1.0.0"" />", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.props")));
-            Assert.DoesNotContain(@$"Include=""X"" Version=""1.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
-        }
-
-        [Fact]
-        public async Task AddPkg_WhenProjectOnboardedToCPMAndPackageIsUpdatedForFirstTime()
-        {
-            using var pathContext = new SimpleTestPathContext();
-
-            // Set up solution, and project
-            var solution = new SimpleTestSolutionContext(pathContext.SolutionRoot);
-            var projectName = "projectA";
-            var projectA = XPlatTestUtils.CreateProject(projectName, pathContext, "net5.0");
-
-            const string version = "2.0.0";
-            const string packageX = "X";
-
-            var packageFrameworks = "net5.0";
-            var packageX200 = XPlatTestUtils.CreatePackage(packageX, version, frameworkString: packageFrameworks);
-
-            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
-                    pathContext.PackageSource,
-                    PackageSaveMode.Defaultv3,
-                    packageX200);
-
-            var propsFile = @$"<Project>
-                                <PropertyGroup>
-                                <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-                                </PropertyGroup>
-                                <ItemGroup>
-                                <PackageVersion Include=""X"" Version=""1.0.0"" />
-                                </ItemGroup>
                             </Project>
                             ";
 
@@ -746,37 +698,33 @@ namespace Dotnet.Integration.Test
             var result = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX} -v {version}", ignoreExitCode: true);
 
             // Assert
-            Assert.DoesNotContain(@$"<PackageVersion Include=""X"" Version=""2.0.0"" />", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.props")));
-            Assert.Contains(@$"Include=""X"" VersionOverride=""2.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
+            Assert.Contains(@$"<ItemGroup>
+    <PackageVersion Include=""X"" Version=""1.0.0"" />
+  </ItemGroup", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.props")));
+            Assert.DoesNotContain(@$"<ItemGroup> <PackageVersion Include=""X"" Version=""1.0.0"" /> </ItemGroup",
+                File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
         }
 
         [Fact]
-        public async Task AddPkg_WhenProjectOnboardedToCPMAndPackageIsUpdatedAfterUpdateOccurredPreviously()
+        public async Task AddPkgWithNoVersion_WhenProjectOnboardedToCPMAndPackageVersionExistsInProps()
         {
             using var pathContext = new SimpleTestPathContext();
 
-            // Set up solution, and project
+            // Set up solution, and two projects
             var solution = new SimpleTestSolutionContext(pathContext.SolutionRoot);
-            var projectName = "projectA";
-            var projectA = XPlatTestUtils.CreateProject(projectName, pathContext, "net5.0");
+            var projectNameA = "projectA";
+            var projectA = XPlatTestUtils.CreateProject(projectNameA, pathContext, "net5.0");
 
-            const string version2 = "2.0.0";
-            const string version3 = "3.0.0";
+            const string version = "1.0.0";
             const string packageX = "X";
 
             var packageFrameworks = "net5.0";
-            var packageX200 = XPlatTestUtils.CreatePackage(packageX, version2, frameworkString: packageFrameworks);
-            var packageX300 = XPlatTestUtils.CreatePackage(packageX, version3, frameworkString: packageFrameworks);
+            var packageX100 = XPlatTestUtils.CreatePackage(packageX, version, frameworkString: packageFrameworks);
 
             await SimpleTestPackageUtility.CreateFolderFeedV3Async(
                     pathContext.PackageSource,
                     PackageSaveMode.Defaultv3,
-                    packageX200);
-
-            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
-                    pathContext.PackageSource,
-                    PackageSaveMode.Defaultv3,
-                    packageX300);
+                    packageX100);
 
             var propsFile = @$"<Project>
                                 <PropertyGroup>
@@ -795,43 +743,47 @@ namespace Dotnet.Integration.Test
             File.WriteAllText(Path.Combine(projectADirectory, "Directory.Packages.props"), propsFile);
 
             //Act
-            var result1 = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX} -v {version2}", ignoreExitCode: true);
-            var result2 = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX} -v {version3}", ignoreExitCode: true);
+            _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX}", ignoreExitCode: true);
 
             // Assert
-            Assert.DoesNotContain(@$"<PackageVersion Include=""X"" Version=""2.0.0"" />", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.props")));
-            Assert.DoesNotContain(@$"<PackageVersion Include=""X"" Version=""3.0.0"" />", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.props")));
-            Assert.DoesNotContain(@$"Include=""X"" VersionOverride=""2.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
-            Assert.Contains(@$"Include=""X"" VersionOverride=""3.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
+            Assert.Contains(@$"<PackageVersion Include=""X"" Version=""1.0.0"" />", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.props")));
+
+            // Checking that version metadata is not added to the project files.
+            Assert.Contains(@$"Include=""X""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
+            Assert.DoesNotContain(@$"Include=""X"" Version=""1.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
         }
 
         [Fact]
-        public async Task AddPkg_WhenProjectOnboardedToCPMAndPackagesExistInProps()
+        public async Task AddPkgWithVersion_WhenProjectOnboardedToCPMAndPackageVersionExistsInProps()
         {
             using var pathContext = new SimpleTestPathContext();
 
-            // Set up solution, and project
+            // Set up solution, and two projects
             var solution = new SimpleTestSolutionContext(pathContext.SolutionRoot);
-            var projectName = "projectA";
-            var projectA = XPlatTestUtils.CreateProject(projectName, pathContext, "net5.0");
+            var projectNameA = "projectA";
+            var projectA = XPlatTestUtils.CreateProject(projectNameA, pathContext, "net5.0");
 
-            const string version = "1.0.0";
+            var projectNameB = "projectB";
+            var projectB = XPlatTestUtils.CreateProject(projectNameB, pathContext, "net5.0");
+
+            const string version1 = "1.0.0";
+            const string version2 = "2.0.0";
             const string packageX = "X";
 
             var packageFrameworks = "net5.0";
-            var packageX100 = XPlatTestUtils.CreatePackage(packageX, version, frameworkString: packageFrameworks);
+            var packageX200 = XPlatTestUtils.CreatePackage(packageX, version2, frameworkString: packageFrameworks);
 
             await SimpleTestPackageUtility.CreateFolderFeedV3Async(
                     pathContext.PackageSource,
                     PackageSaveMode.Defaultv3,
-                    packageX100);
+                    packageX200);
 
             var propsFile = @$"<Project>
                                 <PropertyGroup>
                                 <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
                                 </PropertyGroup>
                                 <ItemGroup>
-                                <PackageVersion Include=""Y"" Version=""1.0.0"" />
+                                <PackageVersion Include=""X"" Version=""1.0.0"" />
                                 </ItemGroup>
                             </Project>
                             ";
@@ -840,15 +792,25 @@ namespace Dotnet.Integration.Test
             solution.Create(pathContext.SolutionRoot);
 
             var projectADirectory = Path.Combine(pathContext.SolutionRoot, projectA.ProjectName);
-            File.WriteAllText(Path.Combine(projectADirectory, "Directory.Packages.Props"), propsFile);
+            File.WriteAllText(Path.Combine(projectADirectory, "Directory.Packages.props"), propsFile);
 
             //Act
-            var result = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX}", ignoreExitCode: true);
+            _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX} -v {version1}", ignoreExitCode: true);
+            _fixture.RunDotnet(projectADirectory, $"add {projectB.ProjectPath} package {packageX} -v {version2}", ignoreExitCode: true);
 
             // Assert
-            Assert.Contains(@$"<PackageVersion Include=""X"" Version=""1.0.0"" />", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.Props")));
+            Assert.Contains(@$"<PackageVersion Include=""X"" Version=""2.0.0"" />", File.ReadAllText(Path.Combine(projectADirectory, "Directory.Packages.props")));
+
+            // Checking that version metadata is not added to the project files.
+            Assert.Contains(@$"Include=""X""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
             Assert.DoesNotContain(@$"Include=""X"" Version=""1.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
+            Assert.DoesNotContain(@$"Include=""X"" Version=""2.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
+
+            Assert.Contains(@$"Include=""X""", File.ReadAllText(Path.Combine(projectADirectory, "projectB.csproj")));
+            Assert.DoesNotContain(@$"Include=""X"" Version=""1.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectB.csproj")));
+            Assert.DoesNotContain(@$"Include=""X"" Version=""2.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectB.csproj")));
         }
+
     }
 }
 
