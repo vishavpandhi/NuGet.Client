@@ -753,4 +753,8 @@ The search is a case-insensitive string comparison using the supplied value, whi
 Non-HTTPS access will be removed in a future version. Consider migrating to 'HTTPS' sources.</value>
     <comment>0 - The command name. Ex. Push/Delete. 1 - list of server uris</comment>
   </data>
+  <data name="Info_AddPkgCPM" xml:space="preserve">
+    <value>PackageVersion and PackageReference for package '{0}' added to Directory.Packages.props file at '{1}' and the project file at '{2}' respectively.</value>
+    <comment>0 - The package ID. 1 - Directory.Packages.props file path. 2 - Project file path.</comment>
+  </data>
 </root>

@@ -190,18 +190,24 @@ namespace NuGet.CommandLine.XPlat
             {
                 // Get package version if it already exists in the props file. Returns null if there is no matching package version.
                 ProjectItem packageVersion = project.Items.LastOrDefault(i => i.ItemType == PACKAGE_VERSION_TYPE_TAG && i.EvaluatedInclude.Equals(libraryDependency.Name));
+                var versionCLIArgument = libraryDependency.LibraryRange.VersionRange.OriginalString;
 
+                //Add <PackageReference/> to the project file.
+                AddPackageReferenceIntoItemGroupCPM(project, itemGroup, libraryDependency);
+
+                // If no <PackageVersion /> exists in the Directory.Packages.props file.
                 if (packageVersion == null)
                 {
                     // Modifying the props file if project is onboarded to CPM.
                     AddPackageVersionIntoItemGroupCPM(project, libraryDependency);
-                    //Modify the project file.
-                    AddPackageReferenceIntoItemGroupCPM(itemGroup, libraryDependency);
                 }
                 else
                 {
-                    // Modify the project file with version override.
-                    UpdatePackageReferenceItemsWithVersionOverride(project, libraryDependency);
+                    // Modify the Directory.Packages.props file with the version that is passed in.
+                    if (versionCLIArgument != null)
+                    {
+                        UpdatePackageVersion(project, packageVersion, versionCLIArgument);
+                    }
                 }
             }
 
@@ -220,18 +226,32 @@ namespace NuGet.CommandLine.XPlat
 
             // Get the ItemGroup to add a PackageVersion to or create a new one.
             var propsItemGroup = GetItemGroup(directoryBuildPropsRootElement.ItemGroups, PACKAGE_VERSION_TYPE_TAG) ?? directoryBuildPropsRootElement.AddItemGroup();
-            AddPackageVersionIntoPropsItemGroup(propsItemGroup, libraryDependency);
+            AddPackageVersionIntoPropsItemGroup(project, propsItemGroup, libraryDependency);
 
             // Save the updated props file.
             directoryBuildPropsRootElement.Save();
         }
 
         /// <summary>
+        /// Get the Directory build props root element for projects onboarded to CPM.
+        /// </summary>
+        /// <param name="project">Project that needs to be modified.</param>
+        /// <returns>The directory build props root element.</returns>
+        private ProjectRootElement GetDirectoryBuildPropsRootElement(Project project)
+        {
+            // Get the Directory.Packages.props path.
+            string directoryPackagesPropsPath = project.GetPropertyValue("DirectoryPackagesPropsPath");
+            ProjectRootElement directoryBuildPropsRootElement = project.Imports.FirstOrDefault(i => i.ImportedProject.FullPath.Equals(directoryPackagesPropsPath)).ImportedProject;
+            return directoryBuildPropsRootElement;
+        }
+
+        /// <summary>
         /// Add package name and version into the props file.
         /// </summary>
+        /// <param name="project">Project that is being modified.</param>
         /// <param name="itemGroup">Item group that needs to be modified in the props file.</param>
         /// <param name="libraryDependency">Package Dependency of the package to be added.</param>
-        private void AddPackageVersionIntoPropsItemGroup(ProjectItemGroupElement itemGroup,
+        private void AddPackageVersionIntoPropsItemGroup(Project project, ProjectItemGroupElement itemGroup,
             LibraryDependency libraryDependency)
         {
             // Add both package reference information and version metadata using the PACKAGE_VERSION_TYPE_TAG.
@@ -240,9 +260,10 @@ namespace NuGet.CommandLine.XPlat
 
             Logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
             Strings.Info_AddPkgAdded,
-            packageVersion,
             libraryDependency.Name,
-            itemGroup.ContainingProject.FullPath));
+            packageVersion,
+            itemGroup.ContainingProject.FullPath
+            ));
 
             AddExtraMetadata(libraryDependency, item);
         }
@@ -261,8 +282,8 @@ namespace NuGet.CommandLine.XPlat
 
             Logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
             Strings.Info_AddPkgAdded,
-            packageVersion,
             libraryDependency.Name,
+            packageVersion,
             itemGroup.ContainingProject.FullPath));
 
             AddExtraMetadata(libraryDependency, item);
@@ -271,19 +292,19 @@ namespace NuGet.CommandLine.XPlat
         /// <summary>
         /// Add only the package name into the project file for projects onboarded to CPM.
         /// </summary>
+        /// <param name="project">Project to be modified.</param>
         /// <param name="itemGroup">Item group to add to.</param>
         /// <param name="libraryDependency">Package Dependency of the package to be added.</param>
-        private void AddPackageReferenceIntoItemGroupCPM(ProjectItemGroupElement itemGroup,
+        private void AddPackageReferenceIntoItemGroupCPM(Project project, ProjectItemGroupElement itemGroup,
             LibraryDependency libraryDependency)
         {
             // Only add the package reference information using the PACKAGE_REFERENCE_TYPE_TAG.
             ProjectItemElement item = itemGroup.AddItem(PACKAGE_REFERENCE_TYPE_TAG, libraryDependency.Name);
-            string packageVersion = "No package version added because this project is onboarded to CPM";
 
             Logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
-            Strings.Info_AddPkgAdded,
+            Strings.Info_AddPkgCPM,
             libraryDependency.Name,
-            packageVersion,
+            project.GetPropertyValue("DirectoryPackagesPropsPath"),
             itemGroup.ContainingProject.FullPath));
 
             AddExtraMetadata(libraryDependency, item);
@@ -307,20 +328,6 @@ namespace NuGet.CommandLine.XPlat
                 var suppressParent = MSBuildStringUtility.Convert(LibraryIncludeFlagUtils.GetFlagString(libraryDependency.SuppressParent));
                 item.AddMetadata(PrivateAssets, suppressParent, expressAsAttribute: false);
             }
-        }
-
-        /// <summary>
-        /// Get the Directory build props root element for projects onboarded to CPM.
-        /// </summary>
-        /// <param name="project">Project that needs to be modified.</param>
-        /// <returns>The directory build props root element.</returns>
-        private ProjectRootElement GetDirectoryBuildPropsRootElement(Project project)
-        {
-            // Get the Directory.Packages.props path.
-            string directoryPackagesPropsPath = project.GetPropertyValue("DirectoryPackagesPropsPath");
-            Logger.LogInformation("Modifying the Directory.Packages.props file at: " + directoryPackagesPropsPath);
-            ProjectRootElement directoryBuildPropsRootElement = project.Imports.FirstOrDefault(i => i.ImportedProject.FullPath.Equals(directoryPackagesPropsPath)).ImportedProject;
-            return directoryBuildPropsRootElement;
         }
 
         /// <summary>
@@ -426,56 +433,20 @@ namespace NuGet.CommandLine.XPlat
         }
 
         /// <summary>
-        /// Update the package reference in the project file with the updated version in the VersionOverride attribute.
+        /// Update the <PackageVersion /> element if a version is passed in as a CLI argument.
         /// </summary>
-        /// <param name="project">Project that needs to be updated.</param>
-        /// <param name="libraryDependency">Package Dependency of the package to be added.</param>
-        private void UpdatePackageReferenceItemsWithVersionOverride(Project project, LibraryDependency libraryDependency)
+        /// <param name="project"></param>
+        /// <param name="packageVersion"><PackageVersion /> item with a matching package ID.</param>
+        /// <param name="versionCLIArgumet">Version that is passed in as a CLI argument.</param>
+        private static void UpdatePackageVersion(Project project, ProjectItem packageVersion, string versionCLIArgumet)
         {
-            Logger.LogInformation("Updating the package reference item's VersionOverride attribute with updated version in this project: " + project.DirectoryPath);
+            // Determine where the <PackageVersion /> item is decalred
+            ProjectItemElement packageVersionItemElement = project.GetItemProvenance(packageVersion).LastOrDefault()?.ItemElement;
 
-            ProjectItem packageReference;
-            ProjectItemElement packageReferenceItemElement;
-
-            // Find the last declared <PackageReference /> item with a matching the package name
-            packageReference = project.Items.LastOrDefault(i => i.ItemType == "PackageReference" && i.EvaluatedInclude.Equals(libraryDependency.Name));
-
-            // If no package reference exists, create and add it to an item group. Create an item group if necessary.
-            if (packageReference == null)
-            {
-                // Determine which <ItemGroup /> to add to by searching for the first one available:
-                //   Find the first <PackageReference /> in the project so we know what ItemGroup to add to
-                //   -or-
-                //   Use the first first ItemGroup
-                //   -or-
-                //   Add a new ItemGroup
-                ProjectItemGroupElement itemGroupElement = project.Xml.ItemGroups.FirstOrDefault(i => i.Items.Any(i => i.ItemType == "PackageReference"))
-                ?? project.Xml.ItemGroups.FirstOrDefault()
-                ?? project.Xml.AddItemGroup();
-                packageReferenceItemElement = itemGroupElement.AddItem("PackageReference", libraryDependency.Name);
-            }
-            else
-            {
-                // Get the project item element with the specified package reference.
-                packageReferenceItemElement = project.GetItemProvenance(packageReference).LastOrDefault()?.ItemElement;
-            }
-
-            // Get the version that the package needs to be udpated to.
-            var version = libraryDependency.LibraryRange.VersionRange.OriginalString ?? libraryDependency.LibraryRange.VersionRange.MinVersion.ToString();
-
-            // Get the VersionOverride attribute.
-            ProjectMetadataElement versionAttribute = packageReferenceItemElement.Metadata.FirstOrDefault(i => i.Name.Equals("VersionOverride"));
-            if (versionAttribute == null)
-            {
-                // Add the Version attribute.
-                packageReferenceItemElement.AddMetadata("VersionOverride", version, expressAsAttribute: true);
-            }
-            else
-            {
-                // Set the Version.
-                versionAttribute.Value = version;
-            }
-            packageReferenceItemElement.ContainingProject.Save();
+            // Get the Version attribute on the packageVersionItemElement.
+            ProjectMetadataElement versionAttribute = packageVersionItemElement.Metadata.FirstOrDefault(i => i.Name.Equals("Version"));
+            // Update the version
+            versionAttribute.Value = versionCLIArgumet;
         }
 
         /// <summary>
