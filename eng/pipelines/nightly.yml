@@ -7,21 +7,28 @@ resources:
         branches:
           - dev
 
-jobs:
-  - job:
-    displayName: Get URL
+stages:
+- stage: GetUrl
+  displayName: Get URL
+  dependsOn: []
+  jobs:
+    - job:
 
-    steps:
-      - task: DownloadPipelineArtifact@2
-        displayName: "Download symbols - NonRTM artifact"
-        inputs:
-          source: specific
-          project: "devdiv"
-          pipeline: "NuGet.Client-Official"
-          artifact: "symbols - NonRTM"
-          path: $(Pipeline.Workspace)\symbols\NonRTM
+      steps:
+        - task: DownloadPipelineArtifact@2
+          displayName: "Download symbols - NonRTM artifact"
+          inputs:
+            source: specific
+            project: "devdiv"
+            pipeline: "NuGet.Client-Official"
+            artifact: "symbols - NonRTM"
+            path: $(Pipeline.Workspace)\symbols\NonRTM
+
+- stage: BashURL
+  displayName: Bash URL
+  dependsOn: GetUrl
+  jobs:
   - job: 
-    displayName: Bash URL
     steps:
       - bash: echo "$(Build.Repository.LocalPath)"
       - bash: echo "$(resources.pipeline)"
