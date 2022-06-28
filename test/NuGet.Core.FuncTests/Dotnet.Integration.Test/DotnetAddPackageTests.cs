@@ -708,11 +708,13 @@ namespace Dotnet.Integration.Test
 
             // Assert
             Assert.True(result.Success, result.Output);
-            Assert.Contains(@$"<ItemGroup> <PackageVersion Include=""X"" Version=""1.0.0"" /> </ItemGroup", File.ReadAllText(Path.Combine(pathContext.SolutionRoot, "Directory.Packages.props")));
+            Assert.Contains(@$"<ItemGroup>
+    <PackageVersion Include=""X"" Version=""1.0.0"" />
+  </ItemGroup", File.ReadAllText(Path.Combine(pathContext.SolutionRoot, "Directory.Packages.props")));
             Assert.DoesNotContain(@$"<ItemGroup> <PackageVersion Include=""X"" Version=""1.0.0"" /> </ItemGroup",
-                File.ReadAllText(Path.Combine(pathContext.SolutionRoot, "projectA.csproj")));
+                File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
         }
-
+        
         [Fact]
         public async Task AddPkgWithNoVersion_WhenProjectOnboardedToCPMAndPackageVersionExistsInProps()
         {
