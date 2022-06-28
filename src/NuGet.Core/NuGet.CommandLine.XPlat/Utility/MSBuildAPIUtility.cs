@@ -437,8 +437,8 @@ namespace NuGet.CommandLine.XPlat
         /// </summary>
         /// <param name="project"></param>
         /// <param name="packageVersion"><PackageVersion /> item with a matching package ID.</param>
-        /// <param name="versionCLIArgumet">Version that is passed in as a CLI argument.</param>
-        private static void UpdatePackageVersion(Project project, ProjectItem packageVersion, string versionCLIArgumet)
+        /// <param name="versionCLIArgument">Version that is passed in as a CLI argument.</param>
+        private static void UpdatePackageVersion(Project project, ProjectItem packageVersion, string versionCLIArgument)
         {
             // Determine where the <PackageVersion /> item is decalred
             ProjectItemElement packageVersionItemElement = project.GetItemProvenance(packageVersion).LastOrDefault()?.ItemElement;
@@ -446,7 +446,8 @@ namespace NuGet.CommandLine.XPlat
             // Get the Version attribute on the packageVersionItemElement.
             ProjectMetadataElement versionAttribute = packageVersionItemElement.Metadata.FirstOrDefault(i => i.Name.Equals("Version"));
             // Update the version
-            versionAttribute.Value = versionCLIArgumet;
+            versionAttribute.Value = versionCLIArgument;
+            packageVersionItemElement.ContainingProject.Save();
         }
 
         /// <summary>
