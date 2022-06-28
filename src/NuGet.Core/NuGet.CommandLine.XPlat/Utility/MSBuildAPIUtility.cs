@@ -35,6 +35,10 @@ namespace NuGet.CommandLine.XPlat
         private const string IncludeAssets = "IncludeAssets";
         private const string PrivateAssets = "PrivateAssets";
         private const string CollectPackageReferences = "CollectPackageReferences";
+        /// <summary>
+        /// The name of the MSBuild property that represents the path to the central package management file, usually Directory.Packages.props.
+        /// </summary>
+        private const string DirectoryPackagesPropsPathPropertyName = "DirectoryPackagesPropsPath";
 
         public ILogger Logger { get; }
 
@@ -240,7 +244,7 @@ namespace NuGet.CommandLine.XPlat
         private ProjectRootElement GetDirectoryBuildPropsRootElement(Project project)
         {
             // Get the Directory.Packages.props path.
-            string directoryPackagesPropsPath = project.GetPropertyValue("DirectoryPackagesPropsPath");
+            string directoryPackagesPropsPath = project.GetPropertyValue(DirectoryPackagesPropsPathPropertyName);
             ProjectRootElement directoryBuildPropsRootElement = project.Imports.FirstOrDefault(i => i.ImportedProject.FullPath.Equals(directoryPackagesPropsPath)).ImportedProject;
             return directoryBuildPropsRootElement;
         }
@@ -265,7 +269,7 @@ namespace NuGet.CommandLine.XPlat
             itemGroup.ContainingProject.FullPath
             ));
 
-            AddExtraMetadata(libraryDependency, item);
+            AddExtraMetadataToProjectItemElement(libraryDependency, item);
         }
 
         /// <summary>
@@ -280,13 +284,9 @@ namespace NuGet.CommandLine.XPlat
             var item = itemGroup.AddItem(PACKAGE_REFERENCE_TYPE_TAG, libraryDependency.Name);
             var packageVersion = AddVersionMetadata(libraryDependency, item);
 
-            Logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
-            Strings.Info_AddPkgAdded,
-            libraryDependency.Name,
-            packageVersion,
-            itemGroup.ContainingProject.FullPath));
+            Logger.LogInformation(string.Format(CultureInfo.CurrentCulture, Strings.Info_AddPkgAdded, libraryDependency.Name, packageVersion, itemGroup.ContainingProject.FullPath));
 
-            AddExtraMetadata(libraryDependency, item);
+            AddExtraMetadataToProjectItemElement(libraryDependency, item);
         }
 
         /// <summary>
@@ -301,13 +301,9 @@ namespace NuGet.CommandLine.XPlat
             // Only add the package reference information using the PACKAGE_REFERENCE_TYPE_TAG.
             ProjectItemElement item = itemGroup.AddItem(PACKAGE_REFERENCE_TYPE_TAG, libraryDependency.Name);
 
-            Logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
-            Strings.Info_AddPkgCPM,
-            libraryDependency.Name,
-            project.GetPropertyValue("DirectoryPackagesPropsPath"),
-            itemGroup.ContainingProject.FullPath));
+            Logger.LogInformation(string.Format(CultureInfo.CurrentCulture, Strings.Info_AddPkgCPM, libraryDependency.Name, project.GetPropertyValue(DirectoryPackagesPropsPathPropertyName), itemGroup.ContainingProject.FullPath));
 
-            AddExtraMetadata(libraryDependency, item);
+            AddExtraMetadataToProjectItemElement(libraryDependency, item);
         }
 
         /// <summary>
@@ -315,7 +311,7 @@ namespace NuGet.CommandLine.XPlat
         /// </summary>
         /// <param name="libraryDependency">Package Dependency of the package to be added.</param>
         /// <param name="item">Item to add the metadata to.</param>
-        private void AddExtraMetadata(LibraryDependency libraryDependency, ProjectItemElement item)
+        private void AddExtraMetadataToProjectItemElement(LibraryDependency libraryDependency, ProjectItemElement item)
         {
             if (libraryDependency.IncludeType != LibraryIncludeFlags.All)
             {
@@ -422,7 +418,7 @@ namespace NuGet.CommandLine.XPlat
 
                 packageReferenceItem.SetMetadataValue(VERSION_TAG, packageVersion);
 
-                UpdateExtraMetadata(libraryDependency, packageReferenceItem);
+                UpdateExtraMetadataInProjectItem(libraryDependency, packageReferenceItem);
 
                 Logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
                     Strings.Info_AddPkgUpdated,
@@ -491,7 +487,7 @@ namespace NuGet.CommandLine.XPlat
         /// </summary>
         /// <param name="libraryDependency">Package Dependency of the package to be added.</param>
         /// <param name="packageReferenceItem">Item to be modified.</param>
-        private void UpdateExtraMetadata(LibraryDependency libraryDependency, ProjectItem packageReferenceItem)
+        private void UpdateExtraMetadataInProjectItem(LibraryDependency libraryDependency, ProjectItem packageReferenceItem)
         {
             if (libraryDependency.IncludeType != LibraryIncludeFlags.All)
             {

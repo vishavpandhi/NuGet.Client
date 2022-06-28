@@ -625,16 +625,22 @@ namespace Dotnet.Integration.Test
             var projectName = "projectA";
             var projectA = XPlatTestUtils.CreateProject(projectName, pathContext, "net5.0");
 
-            const string version = "1.0.0";
+            const string version1 = "1.0.0";
+            const string version2 = "2.0.0";
             const string packageX = "X";
 
             var packageFrameworks = "net5.0";
-            var packageX100 = XPlatTestUtils.CreatePackage(packageX, version, frameworkString: packageFrameworks);
+            var packageX100 = XPlatTestUtils.CreatePackage(packageX, version1, frameworkString: packageFrameworks);
+            var packageX200 = XPlatTestUtils.CreatePackage(packageX, version2, frameworkString: packageFrameworks);
 
             await SimpleTestPackageUtility.CreateFolderFeedV3Async(
                     pathContext.PackageSource,
                     PackageSaveMode.Defaultv3,
                     packageX100);
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packageX200);
 
             var propsFile = @$"<Project>
                                 <PropertyGroup>
@@ -656,9 +662,9 @@ namespace Dotnet.Integration.Test
             // Assert
             Assert.True(result.Success, result.Output);
             Assert.Contains(@$"<ItemGroup>
-    <PackageVersion Include=""X"" Version=""1.0.0"" />
+    <PackageVersion Include=""X"" Version=""2.0.0"" />
   </ItemGroup", File.ReadAllText(Path.Combine(pathContext.SolutionRoot, "Directory.Packages.props")));
-            Assert.DoesNotContain(@$"<ItemGroup> <PackageVersion Include=""X"" Version=""1.0.0"" /> </ItemGroup",
+            Assert.DoesNotContain(@$"<ItemGroup> <PackageVersion Include=""X"" Version=""2.0.0"" /> </ItemGroup",
                 File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
         }
 
@@ -772,7 +778,7 @@ namespace Dotnet.Integration.Test
         {
             using var pathContext = new SimpleTestPathContext();
 
-            // Set up solution, and two projects
+            // Set up solution
             var solution = new SimpleTestSolutionContext(pathContext.SolutionRoot);
             var projectNameA = "projectA";
             var projectA = XPlatTestUtils.CreateProject(projectNameA, pathContext, "net5.0");
@@ -817,6 +823,61 @@ namespace Dotnet.Integration.Test
             Assert.DoesNotContain(@$"Include=""X"" Version=""2.0.0""", File.ReadAllText(Path.Combine(projectADirectory, "projectA.csproj")));
         }
 
+        [Fact]
+        public async Task AddPackageVersionToCorrectItemGroupInPropsFile()
+        {
+            using var pathContext = new SimpleTestPathContext();
+
+            // Set up solution
+            var solution = new SimpleTestSolutionContext(pathContext.SolutionRoot);
+            var projectNameA = "projectA";
+            var projectA = XPlatTestUtils.CreateProject(projectNameA, pathContext, "net5.0");
+
+            const string version = "1.0.0";
+            const string packageX = "X";
+
+            var packageFrameworks = "net5.0";
+            var packageX100 = XPlatTestUtils.CreatePackage(packageX, version, frameworkString: packageFrameworks);
+
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packageX100);
+
+            var propsFile = @$"<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include=""SomeFile"" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include=""Y"" Version=""1.0.0"" />
+  </ItemGroup>
+</Project>";
+
+            solution.Projects.Add(projectA);
+            solution.Create(pathContext.SolutionRoot);
+
+            File.WriteAllText(Path.Combine(pathContext.SolutionRoot, "Directory.Packages.props"), propsFile);
+            var projectADirectory = Path.Combine(pathContext.SolutionRoot, projectA.ProjectName);
+
+            //Act
+            var result = _fixture.RunDotnet(projectADirectory, $"add {projectA.ProjectPath} package {packageX} -v {version}", ignoreExitCode: true);
+
+            // Assert
+            Assert.True(result.Success, result.Output);
+
+            Assert.Contains(@$"<ItemGroup>
+    <PackageVersion Include=""X"" Version=""1.0.0"" />
+    <PackageVersion Include=""Y"" Version=""1.0.0"" />
+  </ItemGroup>", File.ReadAllText(Path.Combine(pathContext.SolutionRoot, "Directory.Packages.props")));
+
+            Assert.DoesNotContain($@"< ItemGroup >
+    < Content Include = ""SomeFile"" />
+    <PackageVersion Include=""X"" Version=""1.0.0"" />
+  </ ItemGroup >", File.ReadAllText(Path.Combine(pathContext.SolutionRoot, "Directory.Packages.props")));
+        }
     }
 }
 
