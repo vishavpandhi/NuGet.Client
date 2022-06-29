@@ -691,11 +691,6 @@ namespace NuGet.Commands
                         {
                             newItem.Properties["locale"] = (string)locale;
                         }
-                        object related;
-                        if (item.Properties.TryGetValue("related", out related))
-                        {
-                            newItem.Properties["related"] = (string)related;
-                        }
                         additionalAction?.Invoke(newItem);
                         yield return newItem;
                     }
