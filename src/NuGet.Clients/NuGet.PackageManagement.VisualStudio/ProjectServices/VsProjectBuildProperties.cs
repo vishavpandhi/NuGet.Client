@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading.Tasks;
-using EnvDTE;
 using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
@@ -18,13 +17,12 @@ namespace NuGet.PackageManagement.VisualStudio
     internal class VsProjectBuildProperties
         : IProjectBuildProperties
     {
-        private readonly Lazy<Project> _dteProject;
-        private Project _project;
+        private readonly EnvDTE.Project _project;
         private readonly IVsBuildPropertyStorage _propertyStorage;
         private readonly IVsProjectThreadingService _threadingService;
 
         public VsProjectBuildProperties(
-            Project project,
+            EnvDTE.Project project,
             IVsBuildPropertyStorage propertyStorage,
             IVsProjectThreadingService threadingService)
         {
@@ -32,19 +30,6 @@ namespace NuGet.PackageManagement.VisualStudio
             Assumes.Present(threadingService);
 
             _project = project;
-            _propertyStorage = propertyStorage;
-            _threadingService = threadingService;
-        }
-
-        public VsProjectBuildProperties(
-            Lazy<Project> project,
-            IVsBuildPropertyStorage propertyStorage,
-            IVsProjectThreadingService threadingService)
-        {
-            Assumes.Present(project);
-            Assumes.Present(threadingService);
-
-            _dteProject = project;
             _propertyStorage = propertyStorage;
             _threadingService = threadingService;
         }
@@ -69,10 +54,6 @@ namespace NuGet.PackageManagement.VisualStudio
 
             try
             {
-                if (_project == null)
-                {
-                    _project = _dteProject.Value;
-                }
                 var property = _project.Properties.Item(propertyName);
                 return property?.Value as string;
             }

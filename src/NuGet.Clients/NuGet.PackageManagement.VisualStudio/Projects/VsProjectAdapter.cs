@@ -12,6 +12,7 @@ using Microsoft;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using NuGet.Commands;
+using NuGet.Common;
 using NuGet.Frameworks;
 using NuGet.ProjectManagement;
 using NuGet.RuntimeModel;
@@ -27,6 +28,7 @@ namespace NuGet.PackageManagement.VisualStudio
         private readonly VsHierarchyItem _vsHierarchyItem;
         private readonly Lazy<EnvDTE.Project> _dteProject;
         private readonly IVsProjectThreadingService _threadingService;
+        private readonly string _projectTypeGuid;
 
         #endregion Private members
 
@@ -124,6 +126,7 @@ namespace NuGet.PackageManagement.VisualStudio
             VsHierarchyItem vsHierarchyItem,
             ProjectNames projectNames,
             string fullProjectPath,
+            string projectTypeGuid,
             Func<IVsHierarchy, EnvDTE.Project> loadDteProject,
             IProjectBuildProperties buildProperties,
             IVsProjectThreadingService threadingService)
@@ -133,6 +136,8 @@ namespace NuGet.PackageManagement.VisualStudio
             _vsHierarchyItem = vsHierarchyItem;
             _dteProject = new Lazy<EnvDTE.Project>(() => loadDteProject(_vsHierarchyItem.VsHierarchy));
             _threadingService = threadingService;
+            _projectTypeGuid = projectTypeGuid;
+
             FullProjectPath = fullProjectPath;
             ProjectNames = projectNames;
             BuildProperties = buildProperties;
@@ -142,11 +147,9 @@ namespace NuGet.PackageManagement.VisualStudio
 
         #region Getters
 
-        public async Task<string[]> GetProjectTypeGuidsAsync()
+        public Task<string[]> GetProjectTypeGuidsAsync()
         {
-            await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-            return VsHierarchyUtility.GetProjectTypeGuids(VsHierarchy, Project.Kind);
+            return Project.GetProjectTypeGuidsAsync();
         }
 
         public async Task<FrameworkName> GetDotNetFrameworkNameAsync()
