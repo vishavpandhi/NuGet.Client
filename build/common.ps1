@@ -99,10 +99,10 @@ Function Invoke-BuildStep {
 
         try {
             if (-not $Arguments) {
-                Invoke-Command $Expression -ErrorVariable err
+                Invoke-Command -ScriptBlock $Expression -ErrorVariable err
             }
             else {
-                Invoke-Command $Expression -ArgumentList $Arguments -ErrorVariable err
+                Invoke-Command -ScriptBlock $Expression -ArgumentList $Arguments -ErrorVariable err
             }
             $completed = $true
         }
