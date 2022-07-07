@@ -81,7 +81,7 @@ do
 	if (( $? )); then
 		echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
 		exit 1
-	fi
+	fi	
 done
 
 # Display .NET CLI info
@@ -120,6 +120,8 @@ rm -rf "/tmp/"dotnet.*
 
 echo "second dotnet cli install finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
 echo "================="
+
+env | sort
 
 #restore solution packages
 dotnet msbuild -t:restore "$DIR/build/bootstrap.proj" -bl:"$BUILD_STAGINGDIRECTORY/binlog/01.RestoreBootstrap.binlog"
