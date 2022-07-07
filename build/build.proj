@@ -410,7 +410,7 @@
     </ItemGroup>
     
     <PropertyGroup Condition=" '$(SkipCoreAssemblies)' != 'true' ">
-      <CoreTestCommand>&quot;$(DotnetExePath)&quot; test @(CoreInputTestAssemblies->'&quot;%(Identity)&quot;', ' ') --logger:&quot;console;verbosity=$(DotNetTestConsoleVerbosity)&quot; --settings:&quot;$(MSBuildThisFileDirectory)xunit.runsettings&quot;</CoreTestCommand>
+      <CoreTestCommand>dotnet test @(CoreInputTestAssemblies->'&quot;%(Identity)&quot;', ' ') --logger:&quot;console;verbosity=$(DotNetTestConsoleVerbosity)&quot; --settings:&quot;$(MSBuildThisFileDirectory)xunit.runsettings&quot;</CoreTestCommand>
       <CoreTestCommand Condition=" '$(CoreTestResultsTrx)' != '' ">$(CoreTestCommand) --logger:&quot;trx;LogFilePath=$(CoreTestResultsTrx)&quot;</CoreTestCommand>
     </PropertyGroup>
 
