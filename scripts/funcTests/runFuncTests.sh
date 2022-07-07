@@ -75,13 +75,16 @@ do
     # Validated have gone through CTI testing and other validation
     # Preview are released bits that are preview versions
     # GA are released servicing and GA builds
-	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version"
-    cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version
+	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath"
+    cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath
 
 	if (( $? )); then
 		echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
 		exit 1
-	fi	
+	fi
+
+	echo "set PATH"
+	export PATH="$DOTNET":"$PATH"
 done
 
 # Display .NET CLI info
