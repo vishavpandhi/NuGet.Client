@@ -75,8 +75,8 @@ do
     # Validated have gone through CTI testing and other validation
     # Preview are released bits that are preview versions
     # GA are released servicing and GA builds
-	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath"
-    cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath
+	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version"
+    cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version
 
 	if (( $? )); then
 		echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
@@ -122,7 +122,7 @@ echo "second dotnet cli install finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
 echo "================="
 
 #restore solution packages
-$DOTNET msbuild -t:restore "$DIR/build/bootstrap.proj" -bl:"$BUILD_STAGINGDIRECTORY/binlog/01.RestoreBootstrap.binlog"
+dotnet msbuild -t:restore "$DIR/build/bootstrap.proj" -bl:"$BUILD_STAGINGDIRECTORY/binlog/01.RestoreBootstrap.binlog"
 if [ $? -ne 0 ]; then
 	echo "Restore failed!!"
 	exit 1
@@ -149,7 +149,7 @@ fi
 
 # restore packages
 echo "dotnet msbuild build/build.proj /t:Restore /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/02.Restore.binlog"
-$DOTNET msbuild build/build.proj /t:Restore /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/02.Restore.binlog
+dotnet msbuild build/build.proj /t:Restore /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/02.Restore.binlog
 
 if [ $? -ne 0 ]; then
 	echo "Restore failed!!"
@@ -160,7 +160,7 @@ echo "Restore finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
 
 # Unit tests
 echo "dotnet msbuild build/build.proj /t:CoreUnitTests /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/03.CoreUnitTests.binlog"
-$DOTNET msbuild build/build.proj /t:CoreUnitTests /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/03.CoreUnitTests.binlog
+dotnet msbuild build/build.proj /t:CoreUnitTests /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/03.CoreUnitTests.binlog
 
 if [ $? -ne 0 ]; then
 	echo "CoreUnitTests failed!!"
@@ -171,7 +171,7 @@ echo "Core tests finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
 
 # Func tests
 echo "dotnet msbuild build/build.proj /t:CoreFuncTests /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/04.CoreFuncTests.binlog"
-$DOTNET msbuild build/build.proj /t:CoreFuncTests /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/04.CoreFuncTests.binlog
+dotnet msbuild build/build.proj /t:CoreFuncTests /p:VisualStudioVersion=17.0 /p:Configuration=Release /p:ReleaseLabel=beta /bl:$BUILD_STAGINGDIRECTORY/binlog/04.CoreFuncTests.binlog
 
 if [ $? -ne 0 ]; then
 	RESULTCODE='1'
