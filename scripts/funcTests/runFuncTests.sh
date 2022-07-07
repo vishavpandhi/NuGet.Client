@@ -84,7 +84,7 @@ do
 	fi
 
 	echo "set PATH"
-	export PATH="$DOTNET":"$PATH"
+	export PATH="$(pwd)/cli":"$PATH"
 done
 
 # Display .NET CLI info
