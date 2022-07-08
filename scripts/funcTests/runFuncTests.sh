@@ -25,23 +25,22 @@ pushd $DIR/
 
 mono --version
 
+echo "Existing .NET SDK:"
 dotnet --info
 
+DOTNET_INSTALLDIR="$(pwd)/cli"
+DOTNET_INSTALLSCRIPT=$DOTNET_INSTALLDIR/dotnet-install.sh
+
 # Download the CLI install script to cli
-echo "Installing dotnet CLI"
-mkdir -p cli
-curl -o cli/dotnet-install.sh -L https://dot.net/v1/dotnet-install.sh
+echo "Installing dotnet CLI to $DOTNET_INSTALLDIR"
+mkdir -p $DOTNET_INSTALLDIR
+curl -o $DOTNET_INSTALLSCRIPT -L https://dot.net/v1/dotnet-install.sh
 
 # Run install.sh
-chmod +x cli/dotnet-install.sh
+chmod +x $DOTNET_INSTALLSCRIPT
 
 # Disable .NET CLI Install Lookup
 DOTNET_MULTILEVEL_LOOKUP=0
-
-DOTNET="$(pwd)/cli/dotnet"
-
-# Let the dotnet cli expand and decompress first if it's a first-run
-$DOTNET --info
 
 # Get CLI Branches for testing
 echo "dotnet msbuild build/config.props /v:m /nologo /t:GetCliBranchForTesting"
@@ -75,32 +74,25 @@ do
     # Validated have gone through CTI testing and other validation
     # Preview are released bits that are preview versions
     # GA are released servicing and GA builds
-	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath"
-    cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath
+	echo "$DOTNET_INSTALLSCRIPT --install-dir $DOTNET_INSTALLDIR --channel $Channel --quality signed --version $Version -nopath"
+    $DOTNET_INSTALLSCRIPT --install-dir $DOTNET_INSTALLDIR --channel $Channel --quality signed --version $Version -nopath
 
 	if (( $? )); then
 		echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
 		exit 1
 	fi
-
-	echo "set PATH"
-	export PATH="$(pwd)/cli":"$PATH"
+    
+	export PATH=$DOTNET_INSTALLDIR:$PATH
+	echo "Added dotnet to the PATH: $PATH"
 done
-
-# Display .NET CLI info
-$DOTNET --info
-if (( $? )); then
-	echo "DOTNET --info failed!!"
-	exit 1
-fi
 
 # Install .NET 5 runtimes and .NETCoreapp3.1 runtimes
 
-echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath"
-cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath
+echo "$DOTNET_INSTALLSCRIPT --install-dir $DOTNET_INSTALLDIR --runtime dotnet --channel 5.0 -nopath"
+$DOTNET_INSTALLSCRIPT --install-dir $DOTNET_INSTALLDIR --runtime dotnet --channel 5.0 -nopath
 
-echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath"
-cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 3.1 -nopath
+echo "$DOTNET_INSTALLSCRIPT --install-dir $DOTNET_INSTALLDIR --runtime dotnet --channel 3.1 -nopath"
+$DOTNET_INSTALLSCRIPT --install-dir $DOTNET_INSTALLDIR --runtime dotnet --channel 3.1 -nopath
 
 if (( $? )); then
 	echo "The .NET CLI Install failed!!"
@@ -108,7 +100,8 @@ if (( $? )); then
 fi
 
 # Display .NET CLI info
-$DOTNET --info
+echo "Newly installed .NET SDK:"
+dotnet --info
 if (( $? )); then
 	echo "DOTNET --info failed!!"
 	exit 1
@@ -123,8 +116,6 @@ rm -rf "/tmp/"dotnet.*
 
 echo "second dotnet cli install finished at `date -u +"%Y-%m-%dT%H:%M:%S"`"
 echo "================="
-
-env | sort
 
 #restore solution packages
 dotnet msbuild -t:restore "$DIR/build/bootstrap.proj" -bl:"$BUILD_STAGINGDIRECTORY/binlog/01.RestoreBootstrap.binlog"
