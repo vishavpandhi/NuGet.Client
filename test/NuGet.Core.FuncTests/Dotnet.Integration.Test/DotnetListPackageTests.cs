@@ -513,6 +513,54 @@ namespace Dotnet.Integration.Test
             Assert.True(lines.Any(l => l.Contains("warn : You are running the 'list package' operation with an 'HTTP' source")), listResult.AllOutput);
         }
 
+        [PlatformFact(Platform.Windows)]
+        public async Task DotnetWhy_LinearDependency_Succeed()
+        {
+            using (var pathContext = _fixture.CreateSimpleTestPathContext())
+            {
+                var projectA = XPlatTestUtils.CreateProject(ProjectName, pathContext, "net6.0");
+
+                var packageX = XPlatTestUtils.CreatePackage();
+                // Generate Package
+                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packageX);
+
+                var packageY = XPlatTestUtils.CreatePackage();
+                // Generate Package
+                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packageY);
+
+
+                var packageZ = XPlatTestUtils.CreatePackage();
+                // Generate Package
+                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packageZ);
+
+                //Create linear dependency X -> Y -> Z
+                packageX.Dependencies.Add(packageY);
+                packageY.Dependencies.Add(packageZ);
+
+                var addResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
+                    $"add {projectA.ProjectPath} package packageX");
+                Assert.True(addResult.Success);
+
+                // took out the line running the restore separately
+
+                var listResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
+                    $"list {projectA.ProjectPath} packageZ package");
+
+                Console.Write(listResult.AllOutput);
+
+                Assert.True(ContainsIgnoringSpaces(listResult.AllOutput, "X -> Y -> Z"));
+            }
+        }
+
         private static string CollapseSpaces(string input)
         {
             return Regex.Replace(input, " +", " ");
