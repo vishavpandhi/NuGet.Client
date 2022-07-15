@@ -13,6 +13,7 @@ namespace NuGet.CommandLine.XPlat
     {
         public ILogger Logger { get; }
         public string Path { get; }
+        public string Destination { get; }
         public IEnumerable<PackageSource> PackageSources { get; }
         public IEnumerable<string> Frameworks { get; }
         public ReportType ReportType { get; }
@@ -22,12 +23,14 @@ namespace NuGet.CommandLine.XPlat
         public bool HighestMinor { get; }
         public CancellationToken CancellationToken { get; }
 
+
         /// <summary>
         /// A constructor for the arguments of list package
         /// command. This is used to execute the runner's
         /// method
         /// </summary>
         /// <param name="path"> The path to the solution or project file </param>
+        /// <param name="destination"></param>
         /// <param name="packageSources"> The sources for the packages to check in the case of --outdated </param>
         /// <param name="frameworks"> The user inputed frameworks to look up for their packages </param>
         /// <param name="reportType"> Which report we're producing (e.g. --outdated) </param>
@@ -39,6 +42,7 @@ namespace NuGet.CommandLine.XPlat
         /// <param name="cancellationToken"></param>
         public ListPackageArgs(
             string path,
+            string destination,
             IEnumerable<PackageSource> packageSources,
             IEnumerable<string> frameworks,
             ReportType reportType,
@@ -50,6 +54,7 @@ namespace NuGet.CommandLine.XPlat
             CancellationToken cancellationToken)
         {
             Path = path ?? throw new ArgumentNullException(nameof(path));
+            Destination = destination ?? throw new ArgumentNullException(nameof(destination));
             PackageSources = packageSources ?? throw new ArgumentNullException(nameof(packageSources));
             Frameworks = frameworks ?? throw new ArgumentNullException(nameof(frameworks));
             ReportType = reportType;

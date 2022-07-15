@@ -92,44 +92,35 @@ namespace NuGet.CommandLine.XPlat
             }
         }
 
-        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTargetLibrary> libraries, string destination)
+        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string destination)
         {
-            foreach (var frameworkPackages in packages)
+            foreach (var target in targetFrameworks)
             {
-                var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
-                Console.Write(frameworkPackages.Framework);
-                Console.Write(":\n");
-                FindPaths(frameworkTopLevelPackages, libraries, destination);
+                foreach (var frameworkPackages in packages)
+                {
+                    // print header for each target framework
+                    Console.Write(frameworkPackages.Framework);
+                    Console.Write(":\n");
+
+                    var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
+                    var libraries = target.Libraries;
+
+                    FindPaths(frameworkTopLevelPackages, libraries, destination);
+                }
             }
         }
 
-        public async Task ExecuteCommandAsync(ListPackageArgs listPackageArgs)
+        public Task ExecuteCommandAsync(ListPackageArgs listPackageArgs)
         {
+            var projectsPaths = new List<string>();
+            // add logic to check if the current directory is a project or solution
+            // for now just use the passed in directory as the path
+            projectsPaths.Add(listPackageArgs.Path);
 
-            if (!File.Exists(listPackageArgs.Path))
-            {
-                Console.Error.WriteLine(string.Format(CultureInfo.CurrentCulture,
-                        Strings.ListPkg_ErrorFileNotFound,
-                        listPackageArgs.Path));
-                return;
-            }
-            //If the given file is a solution, get the list of projects
-            //If not, then it's a project, which is put in a list
-            var projectsPaths = Path.GetExtension(listPackageArgs.Path).Equals(".sln") ?
-                           MSBuildAPIUtility.GetProjectsFromSolution(listPackageArgs.Path).Where(f => File.Exists(f)) :
-                           new List<string>(new string[] { listPackageArgs.Path });
+            //for now using the frameworks option to pass in the "destination" package (the package you want to print the paths to)
+            var destination = listPackageArgs.Destination;
 
-            var autoReferenceFound = false;
             var msBuild = new MSBuildAPIUtility(listPackageArgs.Logger);
-
-            //Print sources, but not for generic list (which is offline)
-            if (listPackageArgs.ReportType != ReportType.Default)
-            {
-                Console.WriteLine();
-                Console.WriteLine(Strings.ListPkg_SourcesUsedDescription);
-                ProjectPackagesPrintUtility.PrintSources(listPackageArgs.PackageSources);
-                Console.WriteLine();
-            }
 
             foreach (var projectPath in projectsPaths)
             {
@@ -163,10 +154,6 @@ namespace NuGet.CommandLine.XPlat
                     var lockFileFormat = new LockFileFormat();
                     var assetsFile = lockFileFormat.Read(assetsPath);
 
-                    var libraries = assetsFile.Targets.ElementAt(0).Libraries;
-                    // libraries gets everything under that target framework
-                    // if there are no dependencies underneath each library then we have essentially reached the end of the dependency path
-
                     // Assets file validation
                     if (assetsFile.PackageSpec != null &&
                         assetsFile.Targets != null &&
@@ -187,46 +174,7 @@ namespace NuGet.CommandLine.XPlat
                             }
                             else
                             {
-                                if (listPackageArgs.ReportType != ReportType.Default)  // generic list package is offline -- no server lookups
-                                {
-                                    PopulateSourceRepositoryCache(listPackageArgs);
-                                    WarnForHttpSources(listPackageArgs);
-                                    await GetRegistrationMetadataAsync(packages, listPackageArgs);
-                                    await AddLatestVersionsAsync(packages, listPackageArgs);
-                                }
-
-                                bool printPackages = FilterPackages(packages, listPackageArgs);
-
-                                // Filter packages for dedicated reports, inform user if none
-                                if (listPackageArgs.ReportType != ReportType.Default && !printPackages)
-                                {
-                                    switch (listPackageArgs.ReportType)
-                                    {
-                                        case ReportType.Outdated:
-                                            Console.WriteLine(string.Format(Strings.ListPkg_NoUpdatesForProject, projectName));
-                                            break;
-                                        case ReportType.Deprecated:
-                                            Console.WriteLine(string.Format(Strings.ListPkg_NoDeprecatedPackagesForProject, projectName));
-                                            break;
-                                        case ReportType.Vulnerable:
-                                            Console.WriteLine(string.Format(Strings.ListPkg_NoVulnerablePackagesForProject, projectName));
-                                            break;
-                                    }
-                                }
-
-                                printPackages = printPackages || ReportType.Default == listPackageArgs.ReportType;
-                                if (printPackages)
-                                {
-                                    var hasAutoReference = false;
-                                    ProjectPackagesPrintUtility.PrintPackages(packages, projectName, listPackageArgs, ref hasAutoReference);
-                                    autoReferenceFound = autoReferenceFound || hasAutoReference;
-
-                                    // nuget why command testing
-
-                                    // hardcoded the destination (the CLI argument that is passed in) for now
-                                    var destination = "System.Memory";
-                                    RunWhyCommand(packages, libraries, destination);
-                                }
+                                RunWhyCommand(packages, assetsFile.Targets, destination);
                             }
                         }
                     }
@@ -240,11 +188,7 @@ namespace NuGet.CommandLine.XPlat
                 }
             }
 
-            // Print a legend message for auto-reference markers used
-            if (autoReferenceFound)
-            {
-                Console.WriteLine(Strings.ListPkg_AutoReferenceDescription);
-            }
+            return Task.CompletedTask;
         }
 
         private static void WarnForHttpSources(ListPackageArgs listPackageArgs)
