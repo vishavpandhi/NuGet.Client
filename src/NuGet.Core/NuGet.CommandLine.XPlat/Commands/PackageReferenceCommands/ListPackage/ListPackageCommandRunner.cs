@@ -11,6 +11,7 @@ using Microsoft.Build.Evaluation;
 using NuGet.CommandLine.XPlat.Utility;
 using NuGet.Configuration;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.ProjectModel;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
@@ -29,8 +30,82 @@ namespace NuGet.CommandLine.XPlat
             _sourceRepositoryCache = new Dictionary<PackageSource, SourceRepository>();
         }
 
+        public void DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, string destination)
+        {
+            //Console.Write(rootPackage.Id);
+            if (rootPackage == destination)
+            {
+                //Console.Write(rootPackage.Id + "\n");
+                Console.Write("    ");
+                int iteration = 0;
+                foreach (var package in path)
+                {
+                    Console.Write(package);
+                    if (iteration < path.Count - 1)
+                    {
+                        Console.Write(" -> ");
+                    }
+                    iteration++;
+                }
+                Console.Write("\n");
+                return;
+            }
+
+            LockFileTargetLibrary library = libraries.FirstOrDefault(i => i.Name == rootPackage);
+            var listDependencies = library.Dependencies;
+
+            if (listDependencies.Count != 0)
+            {
+                foreach (var dependency in listDependencies)
+                {
+                    if (!visited.Contains(dependency.Id))
+                    {
+                        visited.Add(dependency.Id);
+                        path.Add(dependency.Id);
+
+                        // recurse
+                        DfsTraversal(dependency.Id, libraries, visited, path, destination);
+
+                        // backtrack
+                        path.RemoveAt(path.Count - 1);
+                        visited.Remove(dependency.Id);
+                    }
+                }
+            }
+
+            //return;
+        }
+
+        public void FindPaths(IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
+        {
+            HashSet<string> visited = new HashSet<string>();
+            foreach (var package in topLevelPackages)
+            {
+                //Console.Write("name ", package.Name); // printing empty, even though it works when debugging
+
+                // is there a way creating this new object can be avoided
+                //var rootPackage = new PackageDependency(package.Name);
+                //Console.Write("package id", rootPackage.Id); // same issue as above, id and package name should be the same thing
+                List<string> path = new List<string>();
+                path.Add(package.Name);
+                DfsTraversal(package.Name, libraries, visited, path, destination);
+            }
+        }
+
+        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTargetLibrary> libraries, string destination)
+        {
+            foreach (var frameworkPackages in packages)
+            {
+                var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
+                Console.Write(frameworkPackages.Framework);
+                Console.Write(":\n");
+                FindPaths(frameworkTopLevelPackages, libraries, destination);
+            }
+        }
+
         public async Task ExecuteCommandAsync(ListPackageArgs listPackageArgs)
         {
+
             if (!File.Exists(listPackageArgs.Path))
             {
                 Console.Error.WriteLine(string.Format(CultureInfo.CurrentCulture,
@@ -88,6 +163,10 @@ namespace NuGet.CommandLine.XPlat
                     var lockFileFormat = new LockFileFormat();
                     var assetsFile = lockFileFormat.Read(assetsPath);
 
+                    var libraries = assetsFile.Targets.ElementAt(0).Libraries;
+                    // libraries gets everything under that target framework
+                    // if there are no dependencies underneath each library then we have essentially reached the end of the dependency path
+
                     // Assets file validation
                     if (assetsFile.PackageSpec != null &&
                         assetsFile.Targets != null &&
@@ -141,6 +220,12 @@ namespace NuGet.CommandLine.XPlat
                                     var hasAutoReference = false;
                                     ProjectPackagesPrintUtility.PrintPackages(packages, projectName, listPackageArgs, ref hasAutoReference);
                                     autoReferenceFound = autoReferenceFound || hasAutoReference;
+
+                                    // nuget why command testing
+
+                                    // hardcoded the destination (the CLI argument that is passed in) for now
+                                    var destination = "System.Memory";
+                                    RunWhyCommand(packages, libraries, destination);
                                 }
                             }
                         }
