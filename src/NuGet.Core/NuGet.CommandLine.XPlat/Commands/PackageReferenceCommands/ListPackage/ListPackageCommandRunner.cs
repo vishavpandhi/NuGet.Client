@@ -30,27 +30,32 @@ namespace NuGet.CommandLine.XPlat
             _sourceRepositoryCache = new Dictionary<PackageSource, SourceRepository>();
         }
 
+        public void PrintDependencyPath(List<string> path)
+        {
+            Console.Write("\t");
+            int iteration = 0;
+            foreach (var package in path)
+            {
+                Console.Write(package);
+                // don't print arrows after the last package in the path
+                if (iteration < path.Count - 1)
+                {
+                    Console.Write(" -> ");
+                }
+                iteration++;
+            }
+            Console.Write("\n");
+        }
+
         public void DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, string destination)
         {
-            //Console.Write(rootPackage.Id);
             if (rootPackage == destination)
             {
-                //Console.Write(rootPackage.Id + "\n");
-                Console.Write("    ");
-                int iteration = 0;
-                foreach (var package in path)
-                {
-                    Console.Write(package);
-                    if (iteration < path.Count - 1)
-                    {
-                        Console.Write(" -> ");
-                    }
-                    iteration++;
-                }
-                Console.Write("\n");
+                PrintDependencyPath(path);
                 return;
             }
 
+            // Find the library that matches the root package's ID and get all its dependencies
             LockFileTargetLibrary library = libraries.FirstOrDefault(i => i.Name == rootPackage);
             var listDependencies = library.Dependencies;
 
@@ -73,7 +78,8 @@ namespace NuGet.CommandLine.XPlat
                 }
             }
 
-            //return;
+            // no dependency paths have been found
+            return;
         }
 
         public void FindPaths(IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
@@ -81,28 +87,32 @@ namespace NuGet.CommandLine.XPlat
             HashSet<string> visited = new HashSet<string>();
             foreach (var package in topLevelPackages)
             {
-                //Console.Write("name ", package.Name); // printing empty, even though it works when debugging
-
-                // is there a way creating this new object can be avoided
-                //var rootPackage = new PackageDependency(package.Name);
-                //Console.Write("package id", rootPackage.Id); // same issue as above, id and package name should be the same thing
                 List<string> path = new List<string>();
+                // add the top level package to the path first
                 path.Add(package.Name);
                 DfsTraversal(package.Name, libraries, visited, path, destination);
             }
         }
 
+        void PrintFrameworkHeader(string frameworkName)
+        {
+            Console.Write(frameworkName);
+            Console.Write(":\n");
+        }
+
         public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string destination)
         {
+            // print package dependency paths for each target framework
             foreach (var target in targetFrameworks)
             {
                 foreach (var frameworkPackages in packages)
                 {
                     // print header for each target framework
-                    Console.Write(frameworkPackages.Framework);
-                    Console.Write(":\n");
+                    PrintFrameworkHeader(frameworkPackages.Framework);
 
+                    // Get all the top level packages in the framework
                     var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
+                    // Get all the libraries in the framework
                     var libraries = target.Libraries;
 
                     FindPaths(frameworkTopLevelPackages, libraries, destination);

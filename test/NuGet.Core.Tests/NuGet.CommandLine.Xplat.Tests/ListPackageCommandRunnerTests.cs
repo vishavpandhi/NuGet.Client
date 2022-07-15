@@ -134,7 +134,7 @@ namespace NuGet.CommandLine.Xplat.Tests
                 packages.TopLevelPackages = topLevelPackages;
                 packages.TransitivePackages = transitivePackages;
                 var allPackages = new List<FrameworkPackages> { packages };
-                var listPackageArgs = new ListPackageArgs(path: "", packageSources: Enumerable.Empty<PackageSource>(),
+                var listPackageArgs = new ListPackageArgs(path: "", destination: "", packageSources: Enumerable.Empty<PackageSource>(),
                     frameworks: Enumerable.Empty<string>(),
                     ReportType.Outdated,
                     includeTransitive: true, prerelease: false, highestPatch: false, highestMinor: false,
@@ -208,7 +208,7 @@ namespace NuGet.CommandLine.Xplat.Tests
                 packages.TopLevelPackages = topLevelPackages;
                 packages.TransitivePackages = transitivePackages;
                 var allPackages = new List<FrameworkPackages> { packages };
-                var listPackageArgs = new ListPackageArgs(path: "", packageSources: Enumerable.Empty<PackageSource>(),
+                var listPackageArgs = new ListPackageArgs(path: "", destination: "", packageSources: Enumerable.Empty<PackageSource>(),
                     frameworks: Enumerable.Empty<string>(),
                     ReportType.Deprecated,
                     includeTransitive: true, prerelease: false, highestPatch: false, highestMinor: false, logger: new Mock<ILogger>().Object,
@@ -281,7 +281,7 @@ namespace NuGet.CommandLine.Xplat.Tests
                 packages.TopLevelPackages = topLevelPackages;
                 packages.TransitivePackages = transitivePackages;
                 var allPackages = new List<FrameworkPackages> { packages };
-                var listPackageArgs = new ListPackageArgs(path: "", packageSources: Enumerable.Empty<PackageSource>(),
+                var listPackageArgs = new ListPackageArgs(path: "", destination: "", packageSources: Enumerable.Empty<PackageSource>(),
                     frameworks: Enumerable.Empty<string>(),
                     ReportType.Vulnerable,
                     includeTransitive: true, prerelease: false, highestPatch: false, highestMinor: false, logger: new Mock<ILogger>().Object,
