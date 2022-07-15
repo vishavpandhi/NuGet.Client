@@ -3,12 +3,10 @@
 
 using System;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using Microsoft.Extensions.CommandLineUtils;
 using NuGet.Common;
 
-namespace NuGet.CommandLine.XPlat.Commands
+namespace NuGet.CommandLine.XPlat
 {
     internal class ExplainCommand
     {
