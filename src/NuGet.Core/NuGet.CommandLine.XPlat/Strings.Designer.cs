@@ -466,6 +466,42 @@ namespace NuGet.CommandLine.XPlat {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Lists the dependency graph for a particular pakage for a project or solution..
+        /// </summary>
+        internal static string Explain_Description {
+            get {
+                return ResourceManager.GetString("Explain_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A path to a project, solution file or directory..
+        /// </summary>
+        internal static string Explain_PathDescription {
+            get {
+                return ResourceManager.GetString("Explain_PathDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A package name to look-up in the dependency graph..
+        /// </summary>
+        internal static string ExplainCommandPackageDescription {
+            get {
+                return ResourceManager.GetString("ExplainCommandPackageDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies the target framework to look-up in the dependency graph while searching for a package..
+        /// </summary>
+        internal static string ExplainFrameworkDescription {
+            get {
+                return ResourceManager.GetString("ExplainFrameworkDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Forces the application to run using an invariant, English-based culture..
         /// </summary>
         internal static string ForceEnglishOutput_Description {
