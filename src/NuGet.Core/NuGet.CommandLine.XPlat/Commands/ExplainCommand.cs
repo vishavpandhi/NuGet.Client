@@ -10,7 +10,7 @@ namespace NuGet.CommandLine.XPlat
 {
     internal class ExplainCommand
     {
-        public static void Register(CommandLineApplication app, Func<ILogger> getLogger)
+        public static void Register(CommandLineApplication app, Func<ILogger> getLogger, Func<IExplainPackageCommandRunner> getCommandRunner)
         {
             app.Command("explain", explain =>
             {
@@ -22,20 +22,29 @@ namespace NuGet.CommandLine.XPlat
                     Strings.Explain_PathDescription,
                     multipleValues: false);
 
-                CommandArgument packagePath = explain.Argument(
+                CommandArgument package = explain.Argument(
                     "<PACKAGE_NAME>",
                     Strings.ExplainCommandPackageDescription,
                     multipleValues: false);
 
-                CommandOption framework = explain.Option(
+                CommandOption frameworks = explain.Option(
                     "--framework",
                     Strings.ExplainFrameworkDescription,
                     CommandOptionType.MultipleValue);
 
-                explain.OnExecute(() =>
+                explain.OnExecute(async () =>
                 {
-                    ValidatePackage(packagePath);
+                    ValidatePackage(package);
 
+                    var logger = getLogger();
+                    var explainPackageArgs = new ExplainPackageArgs(
+                        path.Value,
+                        package.Value,
+                        frameworks.Values,
+                        logger);
+
+                    var explainPackageCommandRunner = getCommandRunner();
+                    await explainPackageCommandRunner.ExecuteCommandAsync(explainPackageArgs);
                     return 0;
                 });
             });

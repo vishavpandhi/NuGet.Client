@@ -765,4 +765,7 @@ Non-HTTPS access will be removed in a future version. Consider migrating to 'HTT
   <data name="Explain_PathDescription" xml:space="preserve">
     <value>A path to a project, solution file or directory.</value>
   </data>
+  <data name="ExplainPkg_NoPackagesFoundForFrameworks" xml:space="preserve">
+    <value>No packages were found for this framework.</value>
+  </data>
 </root>

@@ -502,6 +502,15 @@ namespace NuGet.CommandLine.XPlat {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No packages were found for this framework..
+        /// </summary>
+        internal static string ExplainPkg_NoPackagesFoundForFrameworks {
+            get {
+                return ResourceManager.GetString("ExplainPkg_NoPackagesFoundForFrameworks", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Forces the application to run using an invariant, English-based culture..
         /// </summary>
         internal static string ForceEnglishOutput_Description {
