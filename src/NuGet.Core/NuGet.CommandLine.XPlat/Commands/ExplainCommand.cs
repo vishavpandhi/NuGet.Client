@@ -8,43 +8,43 @@ using NuGet.Common;
 
 namespace NuGet.CommandLine.XPlat
 {
-    internal class ExplainCommand
+    internal class WhyCommand
     {
-        public static void Register(CommandLineApplication app, Func<ILogger> getLogger, Func<IExplainPackageCommandRunner> getCommandRunner)
+        public static void Register(CommandLineApplication app, Func<ILogger> getLogger, Func<IWhyPackageCommandRunner> getCommandRunner)
         {
-            app.Command("explain", explain =>
+            app.Command("Why", why =>
             {
-                explain.Description = Strings.Explain_Description;
-                explain.HelpOption(XPlatUtility.HelpOption);
+                why.Description = Strings.Why_Description;
+                why.HelpOption(XPlatUtility.HelpOption);
 
-                CommandArgument path = explain.Argument(
+                CommandArgument path = why.Argument(
                     "<PROJECT | SOLUTION>",
-                    Strings.Explain_PathDescription,
+                    Strings.Why_PathDescription,
                     multipleValues: false);
 
-                CommandArgument package = explain.Argument(
+                CommandArgument package = why.Argument(
                     "<PACKAGE_NAME>",
-                    Strings.ExplainCommandPackageDescription,
+                    Strings.WhyCommandPackageDescription,
                     multipleValues: false);
 
-                CommandOption frameworks = explain.Option(
+                CommandOption frameworks = why.Option(
                     "--framework",
-                    Strings.ExplainFrameworkDescription,
+                    Strings.WhyFrameworkDescription,
                     CommandOptionType.MultipleValue);
 
-                explain.OnExecute(async () =>
+                why.OnExecute(async () =>
                 {
                     ValidatePackage(package);
 
                     var logger = getLogger();
-                    var explainPackageArgs = new ExplainPackageArgs(
+                    var WhyPackageArgs = new WhyPackageArgs(
                         path.Value,
                         package.Value,
                         frameworks.Values,
                         logger);
 
-                    var explainPackageCommandRunner = getCommandRunner();
-                    await explainPackageCommandRunner.ExecuteCommandAsync(explainPackageArgs);
+                    var WhyPackageCommandRunner = getCommandRunner();
+                    await WhyPackageCommandRunner.ExecuteCommandAsync(WhyPackageArgs);
                     return 0;
                 });
             });
@@ -55,7 +55,7 @@ namespace NuGet.CommandLine.XPlat
             if (string.IsNullOrEmpty(argument.Value))
             {
                 throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Strings.Error_PkgMissingArgument,
-                    "explain",
+                    "Why",
                     argument.Name));
             }
         }

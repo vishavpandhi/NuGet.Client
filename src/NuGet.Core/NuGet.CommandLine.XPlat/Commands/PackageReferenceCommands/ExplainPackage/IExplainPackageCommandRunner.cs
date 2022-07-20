@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace NuGet.CommandLine.XPlat
 {
-    internal interface IExplainPackageCommandRunner
+    internal interface IWhyPackageCommandRunner
     {
-        Task ExecuteCommandAsync(ExplainPackageArgs explainPackageArgs);
+        Task ExecuteCommandAsync(WhyPackageArgs whyPackageArgs);
     }
 }

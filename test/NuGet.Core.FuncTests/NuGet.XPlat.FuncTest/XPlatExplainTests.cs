@@ -4,27 +4,27 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.CommandLineUtils;
-using NuGet.CommandLine.XPlat.Commands;
+using NuGet.CommandLine.XPlat;
 using NuGet.Common;
 using Xunit;
 
 namespace NuGet.XPlat.FuncTest
 {
     [Collection("NuGet XPlat Test Collection")]
-    public class XPlatExplainTests
+    public class XPlatWhyTests
     {
         [Theory]
         [InlineData("-all")]
         [InlineData("-Signatures")]
         [InlineData("-certificate-fingerprint")]
         [InlineData("--h")]
-        public void ExplainCommandArgsParsing_UnrcognizedOption_Throws(string unrecognizedOption)
+        public void WhyCommandArgsParsing_UnrcognizedOption_Throws(string unrecognizedOption)
         {
             VerifyCommandArgs(
                 (testApp, getLogLevel) =>
                 {
                     //Arrange
-                    string[] args = new string[] { "explain", unrecognizedOption };
+                    string[] args = new string[] { "why", unrecognizedOption };
 
                     // Act & Assert
                     Assert.Throws<CommandParsingException>(() => testApp.Execute(args));
@@ -32,19 +32,19 @@ namespace NuGet.XPlat.FuncTest
         }
 
         [Fact]
-        public void ExplainCommandArgsParsing_MissingPackageName_Throws()
+        public void WhyCommandArgsParsing_MissingPackageName_Throws()
         {
             VerifyCommandArgs(
                 (testApp, getLogLevel) =>
                 {
                     // Arrange
-                    var argList = new List<string>() { "explain" };
+                    var argList = new List<string>() { "why" };
 
                     // Act
                     var ex = Assert.Throws<ArgumentException>(() => testApp.Execute(argList.ToArray()));
 
                     // Assert
-                    Assert.Equal("Unable to explain package. Argument '<PACKAGE_NAME>' not provided.", ex.Message);
+                    Assert.Equal("Unable to why package. Argument '<PACKAGE_NAME>' not provided.", ex.Message);
                 });
         }
 
@@ -57,8 +57,9 @@ namespace NuGet.XPlat.FuncTest
             {
                 Name = "dotnet nuget_test"
             };
-            ExplainCommand.Register(testApp,
-                () => logger);
+            WhyCommand.Register(testApp,
+                () => logger,
+                () => new WhyPackageCommandRunner());
 
             // Act & Assert
             verify(testApp, () => logLevel);

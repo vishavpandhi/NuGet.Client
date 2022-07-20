@@ -12,7 +12,7 @@ using NuGet.ProjectModel;
 
 namespace NuGet.CommandLine.XPlat
 {
-    internal class ExplainPackageCommandRunner : IExplainPackageCommandRunner
+    internal class WhyPackageCommandRunner : IWhyPackageCommandRunner
     {
         private const string ProjectAssetsFile = "ProjectAssetsFile";
         private const string ProjectName = "MSBuildProjectName";
@@ -87,7 +87,7 @@ namespace NuGet.CommandLine.XPlat
             Console.Write(":\n");
         }
 
-        public void RunExplainCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
+        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
         {
             // print package dependency paths for each target framework
             foreach (var target in targetFrameworks)
@@ -109,17 +109,17 @@ namespace NuGet.CommandLine.XPlat
             }
         }
 
-        public Task ExecuteCommandAsync(ExplainPackageArgs explainPackageArgs)
+        public Task ExecuteCommandAsync(WhyPackageArgs whyPackageArgs)
         {
             var projectsPaths = new List<string>();
             // add logic to check if the current directory is a project or solution
             // for now just use the passed in directory as the path
-            projectsPaths.Add(explainPackageArgs.Path);
+            projectsPaths.Add(whyPackageArgs.Path);
 
             // the package you want to print the dependency paths for
-            var package = explainPackageArgs.Package;
+            var package = whyPackageArgs.Package;
 
-            var msBuild = new MSBuildAPIUtility(explainPackageArgs.Logger);
+            var msBuild = new MSBuildAPIUtility(whyPackageArgs.Logger);
 
             foreach (var projectPath in projectsPaths)
             {
@@ -161,7 +161,7 @@ namespace NuGet.CommandLine.XPlat
 
                         // Get all the packages that are referenced in a project
                         // TODO: for now, just passing in true for the last two args (hardcoded) so I need to change that
-                        var packages = msBuild.GetResolvedVersions(project.FullPath, explainPackageArgs.Frameworks, assetsFile, true, true);
+                        var packages = msBuild.GetResolvedVersions(project.FullPath, whyPackageArgs.Frameworks, assetsFile, true, true);
 
                         // If packages equals null, it means something wrong happened
                         // with reading the packages and it was handled and message printed
@@ -171,11 +171,11 @@ namespace NuGet.CommandLine.XPlat
                             // No packages means that no package references at all were found in the current framework
                             if (!packages.Any())
                             {
-                                Console.WriteLine(string.Format(Strings.ExplainPkg_NoPackagesFoundForFrameworks, projectName));
+                                Console.WriteLine(string.Format(Strings.WhyPkg_NoPackagesFoundForFrameworks, projectName));
                             }
                             else
                             {
-                                RunExplainCommand(packages, assetsFile.Targets, package);
+                                RunWhyCommand(packages, assetsFile.Targets, package);
                             }
                         }
                     }

@@ -7,7 +7,7 @@ using NuGet.Common;
 
 namespace NuGet.CommandLine.XPlat
 {
-    internal class ExplainPackageArgs
+    internal class WhyPackageArgs
     {
         public ILogger Logger { get; }
         public string Path { get; }
@@ -16,7 +16,7 @@ namespace NuGet.CommandLine.XPlat
 
 
         /// <summary>
-        /// A constructor for the arguments of explain package
+        /// A constructor for the arguments of Why package
         /// command. This is used to execute the runner's
         /// method
         /// </summary>
@@ -24,7 +24,7 @@ namespace NuGet.CommandLine.XPlat
         /// <param name="package">The package to look up the dependency paths for </param>
         /// <param name="frameworks"> The user inputted frameworks to look up for their packages </param>
         /// <param name="logger"></param>
-        public ExplainPackageArgs(
+        public WhyPackageArgs(
             string path,
             string package,
             IEnumerable<string> frameworks,

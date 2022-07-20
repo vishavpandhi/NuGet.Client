@@ -553,7 +553,7 @@ namespace Dotnet.Integration.Test
                 // took out the line running the restore separately
 
                 var listResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
-                    $"list {projectA.ProjectPath} packageZ package");
+                    $"why {projectA.ProjectPath} packageZ package");
 
                 Console.Write(listResult.AllOutput);
 

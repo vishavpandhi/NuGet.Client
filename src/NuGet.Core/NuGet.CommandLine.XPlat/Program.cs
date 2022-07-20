@@ -184,7 +184,7 @@ namespace NuGet.CommandLine.XPlat
                 AddPackageReferenceCommand.Register(app, () => log, () => new AddPackageReferenceCommandRunner());
                 RemovePackageReferenceCommand.Register(app, () => log, () => new RemovePackageReferenceCommandRunner());
                 ListPackageCommand.Register(app, getHidePrefixLogger, setLogLevel, () => new ListPackageCommandRunner());
-                ExplainCommand.Register(app, getHidePrefixLogger, () => new ExplainPackageCommandRunner());
+                WhyCommand.Register(app, getHidePrefixLogger, () => new WhyPackageCommandRunner());
             }
             else
             {

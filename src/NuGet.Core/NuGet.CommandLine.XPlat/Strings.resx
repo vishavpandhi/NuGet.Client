@@ -753,19 +753,19 @@ The search is a case-insensitive string comparison using the supplied value, whi
 Non-HTTPS access will be removed in a future version. Consider migrating to 'HTTPS' sources.</value>
     <comment>0 - The command name. Ex. Push/Delete. 1 - list of server uris</comment>
   </data>
-  <data name="ExplainCommandPackageDescription" xml:space="preserve">
+  <data name="WhyCommandPackageDescription" xml:space="preserve">
     <value>A package name to look-up in the dependency graph.</value>
   </data>
-  <data name="ExplainFrameworkDescription" xml:space="preserve">
+  <data name="WhyFrameworkDescription" xml:space="preserve">
     <value>Specifies the target framework to look-up in the dependency graph while searching for a package.</value>
   </data>
-  <data name="Explain_Description" xml:space="preserve">
+  <data name="Why_Description" xml:space="preserve">
     <value>Lists the dependency graph for a particular pakage for a project or solution.</value>
   </data>
-  <data name="Explain_PathDescription" xml:space="preserve">
+  <data name="Why_PathDescription" xml:space="preserve">
     <value>A path to a project, solution file or directory.</value>
   </data>
-  <data name="ExplainPkg_NoPackagesFoundForFrameworks" xml:space="preserve">
+  <data name="WhyPkg_NoPackagesFoundForFrameworks" xml:space="preserve">
     <value>No packages were found for this framework.</value>
   </data>
 </root>
