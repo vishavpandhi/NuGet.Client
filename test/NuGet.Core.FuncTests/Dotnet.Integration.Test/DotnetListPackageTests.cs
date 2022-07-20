@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using FluentAssertions;
 using NuGet.Packaging;
 using NuGet.Test.Utility;
 using NuGet.XPlat.FuncTest;
@@ -552,12 +553,11 @@ namespace Dotnet.Integration.Test
 
                 // took out the line running the restore separately
 
-                var listResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
-                    $"why {projectA.ProjectPath} packageZ package");
+                var whyResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
+                    $"nuget why packageZ {projectA.ProjectPath}");
 
-                Console.Write(listResult.AllOutput);
-
-                Assert.True(ContainsIgnoringSpaces(listResult.AllOutput, "X -> Y -> Z"));
+                Assert.True(whyResult.Success);
+                Assert.True(ContainsIgnoringSpaces(whyResult.AllOutput, "X -> Y -> Z"));
             }
         }
 

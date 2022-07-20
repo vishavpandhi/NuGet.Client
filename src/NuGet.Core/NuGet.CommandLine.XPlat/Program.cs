@@ -184,7 +184,6 @@ namespace NuGet.CommandLine.XPlat
                 AddPackageReferenceCommand.Register(app, () => log, () => new AddPackageReferenceCommandRunner());
                 RemovePackageReferenceCommand.Register(app, () => log, () => new RemovePackageReferenceCommandRunner());
                 ListPackageCommand.Register(app, getHidePrefixLogger, setLogLevel, () => new ListPackageCommandRunner());
-                WhyCommand.Register(app, getHidePrefixLogger, () => new WhyPackageCommandRunner());
             }
             else
             {
@@ -197,6 +196,7 @@ namespace NuGet.CommandLine.XPlat
                 VerifyCommand.Register(app, getHidePrefixLogger, setLogLevel, () => new VerifyCommandRunner());
                 TrustedSignersCommand.Register(app, getHidePrefixLogger, setLogLevel);
                 SignCommand.Register(app, getHidePrefixLogger, setLogLevel, () => new SignCommandRunner());
+                WhyCommand.Register(app, getHidePrefixLogger, () => new WhyPackageCommandRunner());
             }
 
             app.FullName = Strings.App_FullName;
