@@ -11,7 +11,6 @@ using Microsoft.Build.Evaluation;
 using NuGet.CommandLine.XPlat.Utility;
 using NuGet.Configuration;
 using NuGet.Packaging;
-using NuGet.Packaging.Core;
 using NuGet.ProjectModel;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
@@ -30,105 +29,20 @@ namespace NuGet.CommandLine.XPlat
             _sourceRepositoryCache = new Dictionary<PackageSource, SourceRepository>();
         }
 
-        public void PrintDependencyPath(List<string> path)
+        public async Task ExecuteCommandAsync(ListPackageArgs listPackageArgs)
         {
-            Console.Write("\t");
-            int iteration = 0;
-            foreach (var package in path)
+            if (!File.Exists(listPackageArgs.Path))
             {
-                Console.Write(package);
-                // don't print arrows after the last package in the path
-                if (iteration < path.Count - 1)
-                {
-                    Console.Write(" -> ");
-                }
-                iteration++;
-            }
-            Console.Write("\n");
-        }
-
-        public void DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, string destination)
-        {
-            if (rootPackage == destination)
-            {
-                PrintDependencyPath(path);
+                Console.Error.WriteLine(string.Format(CultureInfo.CurrentCulture,
+                        Strings.ListPkg_ErrorFileNotFound,
+                        listPackageArgs.Path));
                 return;
             }
-
-            // Find the library that matches the root package's ID and get all its dependencies
-            LockFileTargetLibrary library = libraries.FirstOrDefault(i => i.Name == rootPackage);
-            var listDependencies = library.Dependencies;
-
-            if (listDependencies.Count != 0)
-            {
-                foreach (var dependency in listDependencies)
-                {
-                    if (!visited.Contains(dependency.Id))
-                    {
-                        visited.Add(dependency.Id);
-                        path.Add(dependency.Id);
-
-                        // recurse
-                        DfsTraversal(dependency.Id, libraries, visited, path, destination);
-
-                        // backtrack
-                        path.RemoveAt(path.Count - 1);
-                        visited.Remove(dependency.Id);
-                    }
-                }
-            }
-
-            // no dependency paths have been found
-            return;
-        }
-
-        public void FindPaths(IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
-        {
-            HashSet<string> visited = new HashSet<string>();
-            foreach (var package in topLevelPackages)
-            {
-                List<string> path = new List<string>();
-                // add the top level package to the path first
-                path.Add(package.Name);
-                DfsTraversal(package.Name, libraries, visited, path, destination);
-            }
-        }
-
-        void PrintFrameworkHeader(string frameworkName)
-        {
-            Console.Write(frameworkName);
-            Console.Write(":\n");
-        }
-
-        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string destination)
-        {
-            // print package dependency paths for each target framework
-            foreach (var target in targetFrameworks)
-            {
-                foreach (var frameworkPackages in packages)
-                {
-                    // print header for each target framework
-                    PrintFrameworkHeader(frameworkPackages.Framework);
-
-                    // Get all the top level packages in the framework
-                    var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
-                    // Get all the libraries in the framework
-                    var libraries = target.Libraries;
-
-                    FindPaths(frameworkTopLevelPackages, libraries, destination);
-                }
-            }
-        }
-
-        public Task ExecuteCommandAsync(ListPackageArgs listPackageArgs)
-        {
-            var projectsPaths = new List<string>();
-            // add logic to check if the current directory is a project or solution
-            // for now just use the passed in directory as the path
-            projectsPaths.Add(listPackageArgs.Path);
-
-            //for now using the frameworks option to pass in the "destination" package (the package you want to print the paths to)
-            var destination = listPackageArgs.Destination;
+            //If the given file is a solution, get the list of projects
+            //If not, then it's a project, which is put in a list
+            var projectsPaths = Path.GetExtension(listPackageArgs.Path).Equals(".sln") ?
+                           MSBuildAPIUtility.GetProjectsFromSolution(listPackageArgs.Path).Where(f => File.Exists(f)) :
+                           new List<string>(new string[] { listPackageArgs.Path });
 
             var msBuild = new MSBuildAPIUtility(listPackageArgs.Logger);
 
@@ -184,7 +98,40 @@ namespace NuGet.CommandLine.XPlat
                             }
                             else
                             {
-                                RunWhyCommand(packages, assetsFile.Targets, destination);
+                                if (listPackageArgs.ReportType != ReportType.Default)  // generic list package is offline -- no server lookups
+                                {
+                                    PopulateSourceRepositoryCache(listPackageArgs);
+                                    WarnForHttpSources(listPackageArgs);
+                                    await GetRegistrationMetadataAsync(packages, listPackageArgs);
+                                    await AddLatestVersionsAsync(packages, listPackageArgs);
+                                }
+
+                                bool printPackages = FilterPackages(packages, listPackageArgs);
+
+                                // Filter packages for dedicated reports, inform user if none
+                                if (listPackageArgs.ReportType != ReportType.Default && !printPackages)
+                                {
+                                    switch (listPackageArgs.ReportType)
+                                    {
+                                        case ReportType.Outdated:
+                                            Console.WriteLine(string.Format(Strings.ListPkg_NoUpdatesForProject, projectName));
+                                            break;
+                                        case ReportType.Deprecated:
+                                            Console.WriteLine(string.Format(Strings.ListPkg_NoDeprecatedPackagesForProject, projectName));
+                                            break;
+                                        case ReportType.Vulnerable:
+                                            Console.WriteLine(string.Format(Strings.ListPkg_NoVulnerablePackagesForProject, projectName));
+                                            break;
+                                    }
+                                }
+
+                                printPackages = printPackages || ReportType.Default == listPackageArgs.ReportType;
+                                if (printPackages)
+                                {
+                                    var hasAutoReference = false;
+                                    ProjectPackagesPrintUtility.PrintPackages(packages, projectName, listPackageArgs, ref hasAutoReference);
+                                    autoReferenceFound = autoReferenceFound || hasAutoReference;
+                                }
                             }
                         }
                     }
