@@ -88,10 +88,6 @@ namespace NuGet.CommandLine.XPlat
                     var lockFileFormat = new LockFileFormat();
                     var assetsFile = lockFileFormat.Read(assetsPath);
 
-                    var libraries = assetsFile.Targets.ElementAt(0).Libraries;
-                    // libraries gets everything under that target framework
-                    // if there are no dependencies underneath each library then we have essentially reached the end of the dependency path
-
                     // Assets file validation
                     if (assetsFile.PackageSpec != null &&
                         assetsFile.Targets != null &&
