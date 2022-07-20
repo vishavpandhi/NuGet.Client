@@ -44,7 +44,17 @@ namespace NuGet.CommandLine.XPlat
                            MSBuildAPIUtility.GetProjectsFromSolution(listPackageArgs.Path).Where(f => File.Exists(f)) :
                            new List<string>(new string[] { listPackageArgs.Path });
 
+            var autoReferenceFound = false;
             var msBuild = new MSBuildAPIUtility(listPackageArgs.Logger);
+
+            //Print sources, but not for generic list (which is offline)
+            if (listPackageArgs.ReportType != ReportType.Default)
+            {
+                Console.WriteLine();
+                Console.WriteLine(Strings.ListPkg_SourcesUsedDescription);
+                ProjectPackagesPrintUtility.PrintSources(listPackageArgs.PackageSources);
+                Console.WriteLine();
+            }
 
             foreach (var projectPath in projectsPaths)
             {
@@ -77,6 +87,10 @@ namespace NuGet.CommandLine.XPlat
                 {
                     var lockFileFormat = new LockFileFormat();
                     var assetsFile = lockFileFormat.Read(assetsPath);
+
+                    var libraries = assetsFile.Targets.ElementAt(0).Libraries;
+                    // libraries gets everything under that target framework
+                    // if there are no dependencies underneath each library then we have essentially reached the end of the dependency path
 
                     // Assets file validation
                     if (assetsFile.PackageSpec != null &&
@@ -145,7 +159,11 @@ namespace NuGet.CommandLine.XPlat
                 }
             }
 
-            return Task.CompletedTask;
+            // Print a legend message for auto-reference markers used
+            if (autoReferenceFound)
+            {
+                Console.WriteLine(Strings.ListPkg_AutoReferenceDescription);
+            }
         }
 
         private static void WarnForHttpSources(ListPackageArgs listPackageArgs)

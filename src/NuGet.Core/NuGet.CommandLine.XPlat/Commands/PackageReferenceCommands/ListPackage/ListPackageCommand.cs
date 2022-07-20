@@ -38,8 +38,6 @@ namespace NuGet.CommandLine.XPlat
                     Strings.ListPkg_PathDescription,
                     multipleValues: false);
 
-                var destination = listpkg.Argument("--destination", "The path for which you want to print dependency graph for.");
-
                 var framework = listpkg.Option(
                     "--framework",
                     Strings.ListPkg_FrameworkDescription,
@@ -120,7 +118,6 @@ namespace NuGet.CommandLine.XPlat
 
                     var packageRefArgs = new ListPackageArgs(
                         path.Value,
-                        destination.Value,
                         packageSources,
                         framework.Values,
                         reportType,
