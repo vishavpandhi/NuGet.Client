@@ -554,7 +554,7 @@ namespace Dotnet.Integration.Test
                 // took out the line running the restore separately
 
                 var whyResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
-                    $"nuget why packageZ {projectA.ProjectPath}");
+                    $"nuget why {projectA.ProjectPath} packageZ");
 
                 Assert.True(whyResult.Success);
                 Assert.True(ContainsIgnoringSpaces(whyResult.AllOutput, "X -> Y -> Z"));
