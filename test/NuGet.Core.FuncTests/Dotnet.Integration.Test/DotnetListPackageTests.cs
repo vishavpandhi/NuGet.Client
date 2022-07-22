@@ -519,33 +519,27 @@ namespace Dotnet.Integration.Test
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
             {
+                var solution = new SimpleTestSolutionContext(pathContext.SolutionRoot);
                 var projectA = XPlatTestUtils.CreateProject(ProjectName, pathContext, "net6.0");
 
                 var packageX = XPlatTestUtils.CreatePackage();
-                // Generate Package
-                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
-                    pathContext.PackageSource,
-                    PackageSaveMode.Defaultv3,
-                    packageX);
-
                 var packageY = XPlatTestUtils.CreatePackage();
-                // Generate Package
-                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
-                    pathContext.PackageSource,
-                    PackageSaveMode.Defaultv3,
-                    packageY);
-
-
                 var packageZ = XPlatTestUtils.CreatePackage();
-                // Generate Package
-                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
-                    pathContext.PackageSource,
-                    PackageSaveMode.Defaultv3,
-                    packageZ);
 
-                //Create linear dependency X -> Y -> Z
+                // Create linear dependency X -> Y -> Z
                 packageX.Dependencies.Add(packageY);
                 packageY.Dependencies.Add(packageZ);
+
+                solution.Projects.Add(projectA);
+                solution.Create(pathContext.SolutionRoot);
+
+                // Generate Package
+                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packageX,
+                    packageY,
+                    packageZ);
 
                 var addResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
                     $"add {projectA.ProjectPath} package packageX");

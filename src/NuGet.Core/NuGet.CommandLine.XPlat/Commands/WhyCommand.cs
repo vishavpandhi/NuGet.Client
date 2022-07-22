@@ -12,7 +12,7 @@ namespace NuGet.CommandLine.XPlat
     {
         public static void Register(CommandLineApplication app, Func<ILogger> getLogger, Func<IWhyPackageCommandRunner> getCommandRunner)
         {
-            app.Command("Why", why =>
+            app.Command("why", why =>
             {
                 why.Description = Strings.Why_Description;
                 why.HelpOption(XPlatUtility.HelpOption);
