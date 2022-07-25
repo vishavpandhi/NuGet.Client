@@ -17,29 +17,37 @@ namespace NuGet.CommandLine.XPlat
         private const string ProjectAssetsFile = "ProjectAssetsFile";
         private const string ProjectName = "MSBuildProjectName";
 
-        public void PrintDependencyPath(List<string> path)
+        public void PrintDependencyPathsInFramework(List<List<string>> listOfPaths)
         {
             Console.Write("\t");
-            int iteration = 0;
-            foreach (var package in path)
+
+            if (listOfPaths.Count == 0)
             {
-                Console.Write(package);
-                // don't print arrows after the last package in the path
-                if (iteration < path.Count - 1)
-                {
-                    Console.Write(" -> ");
-                }
-                iteration++;
+                Console.Write("No dependency paths found in this framework.");
             }
-            Console.Write("\n");
+
+            int iteration = 0;
+            foreach (var path in listOfPaths)
+            {
+                foreach (var package in path)
+                {
+                    Console.Write(package);
+                    // don't print arrows after the last package in the path
+                    if (iteration < path.Count - 1)
+                    {
+                        Console.Write(" -> ");
+                    }
+                    iteration++;
+                }
+            }
         }
 
-        public void DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, string destination)
+        public List<List<string>> DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, List<List<string>> listOfPaths, string destination)
         {
             if (rootPackage == destination)
             {
-                PrintDependencyPath(path);
-                return;
+                listOfPaths.Add(path);
+                return listOfPaths;
             }
 
             // Find the library that matches the root package's ID and get all its dependencies
@@ -56,7 +64,7 @@ namespace NuGet.CommandLine.XPlat
                         path.Add(dependency.Id);
 
                         // recurse
-                        DfsTraversal(dependency.Id, libraries, visited, path, destination);
+                        DfsTraversal(dependency.Id, libraries, visited, path, listOfPaths, destination);
 
                         // backtrack
                         path.RemoveAt(path.Count - 1);
@@ -65,19 +73,22 @@ namespace NuGet.CommandLine.XPlat
                 }
             }
 
-            // no dependency paths have been found
-            return;
+            return listOfPaths;
         }
 
         public void FindPaths(IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
         {
+            List<List<string>> listOfPaths = new List<List<string>>();
             HashSet<string> visited = new HashSet<string>();
             foreach (var package in topLevelPackages)
             {
-                List<string> path = new List<string>();
-                // add the top level package to the path first
-                path.Add(package.Name);
-                DfsTraversal(package.Name, libraries, visited, path, destination);
+                List<string> path = new List<string>
+                {
+                    // add the top level package to the path first
+                    package.Name
+                };
+                var dependencyPathsInFramework = DfsTraversal(package.Name, libraries, visited, path, listOfPaths, destination);
+                PrintDependencyPathsInFramework(dependencyPathsInFramework);
             }
         }
 
@@ -89,23 +100,17 @@ namespace NuGet.CommandLine.XPlat
 
         public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
         {
-            // print package dependency paths for each target framework
-            foreach (var target in targetFrameworks)
+            foreach (var frameworkPackages in packages)
             {
+                // print header for each target framework
+                PrintFrameworkHeader(frameworkPackages.Framework);
 
-                //TODO: i think you only need this second for loop because the list of packages is just packages in each framework?
-                foreach (var frameworkPackages in packages)
-                {
-                    // print header for each target framework
-                    PrintFrameworkHeader(target.Name);
+                // Get all the top level packages in the framework
+                var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
+                // Get all the libraries in the framework
+                var libraries = targetFrameworks.FirstOrDefault(i => i.Name == frameworkPackages.Framework).Libraries;
 
-                    // Get all the top level packages in the framework
-                    var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
-                    // Get all the libraries in the framework
-                    var libraries = target.Libraries;
-
-                    FindPaths(frameworkTopLevelPackages, libraries, package);
-                }
+                FindPaths(frameworkTopLevelPackages, libraries, package);
             }
         }
 
