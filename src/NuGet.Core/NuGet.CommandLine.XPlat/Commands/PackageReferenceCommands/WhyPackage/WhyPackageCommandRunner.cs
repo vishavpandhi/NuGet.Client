@@ -17,103 +17,6 @@ namespace NuGet.CommandLine.XPlat
         private const string ProjectAssetsFile = "ProjectAssetsFile";
         private const string ProjectName = "MSBuildProjectName";
 
-        public void PrintDependencyPathsInFramework(List<List<string>> listOfPaths)
-        {
-            Console.Write("\t");
-
-            if (listOfPaths.Count == 0)
-            {
-                Console.Write("No dependency paths found in this framework.");
-            }
-
-            int iteration = 0;
-            foreach (var path in listOfPaths)
-            {
-                foreach (var package in path)
-                {
-                    Console.Write(package);
-                    // don't print arrows after the last package in the path
-                    if (iteration < path.Count - 1)
-                    {
-                        Console.Write(" -> ");
-                    }
-                    iteration++;
-                }
-            }
-        }
-
-        public List<List<string>> DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, List<List<string>> listOfPaths, string destination)
-        {
-            if (rootPackage == destination)
-            {
-                listOfPaths.Add(path);
-                return listOfPaths;
-            }
-
-            // Find the library that matches the root package's ID and get all its dependencies
-            LockFileTargetLibrary library = libraries.FirstOrDefault(i => i.Name == rootPackage);
-            var listDependencies = library.Dependencies;
-
-            if (listDependencies.Count != 0)
-            {
-                foreach (var dependency in listDependencies)
-                {
-                    if (!visited.Contains(dependency.Id))
-                    {
-                        visited.Add(dependency.Id);
-                        path.Add(dependency.Id);
-
-                        // recurse
-                        DfsTraversal(dependency.Id, libraries, visited, path, listOfPaths, destination);
-
-                        // backtrack
-                        path.RemoveAt(path.Count - 1);
-                        visited.Remove(dependency.Id);
-                    }
-                }
-            }
-
-            return listOfPaths;
-        }
-
-        public void FindPaths(IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
-        {
-            List<List<string>> listOfPaths = new List<List<string>>();
-            HashSet<string> visited = new HashSet<string>();
-            foreach (var package in topLevelPackages)
-            {
-                List<string> path = new List<string>
-                {
-                    // add the top level package to the path first
-                    package.Name
-                };
-                var dependencyPathsInFramework = DfsTraversal(package.Name, libraries, visited, path, listOfPaths, destination);
-                PrintDependencyPathsInFramework(dependencyPathsInFramework);
-            }
-        }
-
-        void PrintFrameworkHeader(string frameworkName)
-        {
-            Console.Write(frameworkName);
-            Console.Write(":\n");
-        }
-
-        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
-        {
-            foreach (var frameworkPackages in packages)
-            {
-                // print header for each target framework
-                PrintFrameworkHeader(frameworkPackages.Framework);
-
-                // Get all the top level packages in the framework
-                var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
-                // Get all the libraries in the framework
-                var libraries = targetFrameworks.FirstOrDefault(i => i.Name == frameworkPackages.Framework).Libraries;
-
-                FindPaths(frameworkTopLevelPackages, libraries, package);
-            }
-        }
-
         public Task ExecuteCommandAsync(WhyPackageArgs whyPackageArgs)
         {
             var projectsPaths = new List<string>();
@@ -195,6 +98,108 @@ namespace NuGet.CommandLine.XPlat
             }
 
             return Task.CompletedTask;
+        }
+
+        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
+        {
+            foreach (var frameworkPackages in packages)
+            {
+                // Get all the top level packages in the framework
+                var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
+                // Get all the libraries in the framework
+                var libraries = targetFrameworks.FirstOrDefault(i => i.Name == frameworkPackages.Framework).Libraries;
+
+                FindPaths(frameworkPackages.Framework, frameworkTopLevelPackages, libraries, package);
+            }
+        }
+
+        public void FindPaths(string frameworkName, IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
+        {
+            PrintFrameworkHeader(frameworkName);
+
+            List<List<string>> listOfPaths = new List<List<string>>();
+            HashSet<string> visited = new HashSet<string>();
+            foreach (var package in topLevelPackages)
+            {
+                List<string> path = new List<string>
+                {
+                    // add the top level package to the path first
+                    package.Name
+                };
+                var dependencyPathsInFramework = DfsTraversal(package.Name, libraries, visited, path, listOfPaths, destination);
+                PrintDependencyPathsInFramework(dependencyPathsInFramework);
+            }
+        }
+
+        public List<List<string>> DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, List<List<string>> listOfPaths, string destination)
+        {
+            if (rootPackage == destination)
+            {
+                // copy what is stored in list variable over to list that you allocate memory for
+                List<string> pathToAdd = new List<string>();
+                foreach (var p in path)
+                {
+                    pathToAdd.Add(p);
+                }
+                listOfPaths.Add(pathToAdd);
+                return listOfPaths;
+            }
+
+            // Find the library that matches the root package's ID and get all its dependencies
+            LockFileTargetLibrary library = libraries.FirstOrDefault(i => i.Name == rootPackage);
+            var listDependencies = library.Dependencies;
+
+            if (listDependencies.Count != 0)
+            {
+                foreach (var dependency in listDependencies)
+                {
+                    if (!visited.Contains(dependency.Id))
+                    {
+                        visited.Add(dependency.Id);
+                        path.Add(dependency.Id);
+
+                        // recurse
+                        DfsTraversal(dependency.Id, libraries, visited, path, listOfPaths, destination);
+
+                        // backtrack
+                        path.RemoveAt(path.Count - 1);
+                        visited.Remove(dependency.Id);
+                    }
+                }
+            }
+
+            return listOfPaths;
+        }
+
+        public void PrintDependencyPathsInFramework(List<List<string>> listOfPaths)
+        {
+            if (listOfPaths.Count == 0)
+            {
+                Console.Write("No dependency paths found in this framework.");
+            }
+
+            foreach (var path in listOfPaths)
+            {
+                Console.Write("\t");
+                int iteration = 0;
+                foreach (var package in path)
+                {
+                    Console.Write(package);
+                    // don't print arrows after the last package in the path
+                    if (iteration < path.Count - 1)
+                    {
+                        Console.Write(" -> ");
+                    }
+                    iteration++;
+                }
+                Console.Write("\n");
+            }
+        }
+
+        void PrintFrameworkHeader(string frameworkName)
+        {
+            Console.Write(frameworkName);
+            Console.Write(":\n");
         }
     }
 }
