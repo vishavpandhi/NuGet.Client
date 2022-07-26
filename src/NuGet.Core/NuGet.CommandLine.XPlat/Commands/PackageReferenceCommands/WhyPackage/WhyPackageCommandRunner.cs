@@ -19,10 +19,9 @@ namespace NuGet.CommandLine.XPlat
 
         public Task ExecuteCommandAsync(WhyPackageArgs whyPackageArgs)
         {
-            var projectsPaths = new List<string>();
-            // add logic to check if the current directory is a project or solution
-            // for now just use the passed in directory as the path
-            projectsPaths.Add(whyPackageArgs.Path);
+            var projectsPaths = Path.GetExtension(whyPackageArgs.Path).Equals(".sln") ?
+                           MSBuildAPIUtility.GetProjectsFromSolution(whyPackageArgs.Path).Where(f => File.Exists(f)) :
+                           new List<string>(new string[] { whyPackageArgs.Path });
 
             // the package you want to print the dependency paths for
             var package = whyPackageArgs.Package;
