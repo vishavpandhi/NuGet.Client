@@ -19,6 +19,7 @@ namespace NuGet.CommandLine.XPlat
 
         public Task ExecuteCommandAsync(WhyPackageArgs whyPackageArgs)
         {
+            //TODO: figure out how to use current directory if path is not passed in
             var projectsPaths = Path.GetExtension(whyPackageArgs.Path).Equals(".sln") ?
                            MSBuildAPIUtility.GetProjectsFromSolution(whyPackageArgs.Path).Where(f => File.Exists(f)) :
                            new List<string>(new string[] { whyPackageArgs.Path });
@@ -82,6 +83,7 @@ namespace NuGet.CommandLine.XPlat
                             }
                             else
                             {
+                                Console.Write($"Project '{projectName}' has the following dependency graph for '{package}'\n");
                                 RunWhyCommand(packages, assetsFile.Targets, package);
                             }
                         }
@@ -99,7 +101,7 @@ namespace NuGet.CommandLine.XPlat
             return Task.CompletedTask;
         }
 
-        public void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
+        private void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
         {
             foreach (var frameworkPackages in packages)
             {
@@ -112,30 +114,40 @@ namespace NuGet.CommandLine.XPlat
             }
         }
 
-        public void FindPaths(string frameworkName, IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
+        private void FindPaths(string frameworkName, IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
         {
             PrintFrameworkHeader(frameworkName);
 
-            List<List<string>> listOfPaths = new List<List<string>>();
-            HashSet<string> visited = new HashSet<string>();
+            List<List<Dependency>> listOfPaths = new List<List<Dependency>>();
+            HashSet<Dependency> visited = new HashSet<Dependency>();
             foreach (var package in topLevelPackages)
             {
-                List<string> path = new List<string>
+                Dependency dep;
+                dep.name = package.Name;
+                dep.version = package.OriginalRequestedVersion;
+
+                List<Dependency> path = new List<Dependency>
                 {
-                    // add the top level package to the path first
-                    package.Name
+                    dep
                 };
+
                 var dependencyPathsInFramework = DfsTraversal(package.Name, libraries, visited, path, listOfPaths, destination);
                 PrintDependencyPathsInFramework(dependencyPathsInFramework);
             }
         }
 
-        public List<List<string>> DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<string> visited, List<string> path, List<List<string>> listOfPaths, string destination)
+        struct Dependency
+        {
+            public string name;
+            public string version;
+        }
+
+        private List<List<Dependency>> DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<Dependency> visited, List<Dependency> path, List<List<Dependency>> listOfPaths, string destination)
         {
             if (rootPackage == destination)
             {
                 // copy what is stored in list variable over to list that you allocate memory for
-                List<string> pathToAdd = new List<string>();
+                List<Dependency> pathToAdd = new List<Dependency>();
                 foreach (var p in path)
                 {
                     pathToAdd.Add(p);
@@ -152,17 +164,20 @@ namespace NuGet.CommandLine.XPlat
             {
                 foreach (var dependency in listDependencies)
                 {
-                    if (!visited.Contains(dependency.Id))
+                    Dependency dep;
+                    dep.name = dependency.Id;
+                    dep.version = dependency.VersionRange.MinVersion.Version.ToString();
+                    if (!visited.Contains(dep))
                     {
-                        visited.Add(dependency.Id);
-                        path.Add(dependency.Id);
+                        visited.Add(dep);
+                        path.Add(dep);
 
                         // recurse
                         DfsTraversal(dependency.Id, libraries, visited, path, listOfPaths, destination);
 
                         // backtrack
                         path.RemoveAt(path.Count - 1);
-                        visited.Remove(dependency.Id);
+                        visited.Remove(dep);
                     }
                 }
             }
@@ -170,20 +185,20 @@ namespace NuGet.CommandLine.XPlat
             return listOfPaths;
         }
 
-        public void PrintDependencyPathsInFramework(List<List<string>> listOfPaths)
+        private void PrintDependencyPathsInFramework(List<List<Dependency>> listOfPaths)
         {
             if (listOfPaths.Count == 0)
             {
-                Console.Write("No dependency paths found in this framework.");
+                Console.Write("No dependency paths found.");
             }
 
             foreach (var path in listOfPaths)
             {
-                Console.Write("\t");
+                Console.Write("\t\t");
                 int iteration = 0;
                 foreach (var package in path)
                 {
-                    Console.Write(package);
+                    Console.Write($"{package.name} ({package.version})");
                     // don't print arrows after the last package in the path
                     if (iteration < path.Count - 1)
                     {
@@ -195,9 +210,10 @@ namespace NuGet.CommandLine.XPlat
             }
         }
 
-        void PrintFrameworkHeader(string frameworkName)
+        private void PrintFrameworkHeader(string frameworkName)
         {
-            Console.Write(frameworkName);
+            Console.Write("\t");
+            Console.Write($"[{frameworkName}]");
             Console.Write(":\n");
         }
     }
