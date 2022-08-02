@@ -17,6 +17,11 @@ namespace NuGet.CommandLine.XPlat
         private const string ProjectAssetsFile = "ProjectAssetsFile";
         private const string ProjectName = "MSBuildProjectName";
 
+        /// <summary>
+        /// Use CLI arguments to execute why command.
+        /// </summary>
+        /// <param name="whyPackageArgs">CLI arguments.</param>
+        /// <returns></returns>
         public Task ExecuteCommandAsync(WhyPackageArgs whyPackageArgs)
         {
             //TODO: figure out how to use current directory if path is not passed in
@@ -101,23 +106,40 @@ namespace NuGet.CommandLine.XPlat
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Run the why command, print out output to console.
+        /// </summary>
+        /// <param name="packages">All packages in the project. Split up by top level packages and transitive packages.</param>
+        /// <param name="targetFrameworks">All target frameworks in project and corresponding info about frameworks.</param>
+        /// <param name="package">Package passed in as CLI argument.</param>
         private void RunWhyCommand(IEnumerable<FrameworkPackages> packages, IList<LockFileTarget> targetFrameworks, string package)
         {
             foreach (var frameworkPackages in packages)
             {
+                // Print framework name
+                var frameworkName = frameworkPackages.Framework;
+                PrintFrameworkHeader(frameworkName);
+
                 // Get all the top level packages in the framework
                 var frameworkTopLevelPackages = frameworkPackages.TopLevelPackages;
                 // Get all the libraries in the framework
                 var libraries = targetFrameworks.FirstOrDefault(i => i.Name == frameworkPackages.Framework).Libraries;
 
-                FindPaths(frameworkPackages.Framework, frameworkTopLevelPackages, libraries, package);
+                var dependencyGraph = FindPaths(frameworkTopLevelPackages, libraries, package);
+                PrintDependencyGraphInFramework(dependencyGraph);
             }
         }
 
-        private void FindPaths(string frameworkName, IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
+        /// <summary>
+        /// Find all dependency paths.
+        /// </summary>
+        /// <param name="topLevelPackages">"root nodes" of the graph.</param>
+        /// <param name="libraries">All libraries in a given project. </param>
+        /// <param name="destination">The package name CLI argument.</param>
+        /// <returns></returns>
+        private List<List<Dependency>> FindPaths(IEnumerable<InstalledPackageReference> topLevelPackages, IList<LockFileTargetLibrary> libraries, string destination)
         {
-            PrintFrameworkHeader(frameworkName);
-
+            List<List<Dependency>> dependencyGraph = new List<List<Dependency>>();
             List<List<Dependency>> listOfPaths = new List<List<Dependency>>();
             HashSet<Dependency> visited = new HashSet<Dependency>();
             foreach (var package in topLevelPackages)
@@ -132,8 +154,9 @@ namespace NuGet.CommandLine.XPlat
                 };
 
                 var dependencyPathsInFramework = DfsTraversal(package.Name, libraries, visited, path, listOfPaths, destination);
-                PrintDependencyPathsInFramework(dependencyPathsInFramework);
+                dependencyGraph.AddRange(dependencyPathsInFramework);
             }
+            return dependencyGraph;
         }
 
         struct Dependency
@@ -142,6 +165,16 @@ namespace NuGet.CommandLine.XPlat
             public string version;
         }
 
+        /// <summary>
+        /// DFS from root node until destination is found (if destination ID exists)
+        /// </summary>
+        /// <param name="rootPackage">Top level packahe.</param>
+        /// <param name="libraries">All libraries in the target framework.</param>
+        /// <param name="visited">A set to keep track of all nodes that have been visisted.</param>
+        /// <param name="path">Keep track of path as DFS happens.</param>
+        /// <param name="listOfPaths">List of all dependency paths that lead to destination.</param>
+        /// <param name="destination">CLI argument with the package that is passed in.</param>
+        /// <returns></returns>
         private List<List<Dependency>> DfsTraversal(string rootPackage, IList<LockFileTargetLibrary> libraries, HashSet<Dependency> visited, List<Dependency> path, List<List<Dependency>> listOfPaths, string destination)
         {
             if (rootPackage == destination)
@@ -185,10 +218,15 @@ namespace NuGet.CommandLine.XPlat
             return listOfPaths;
         }
 
-        private void PrintDependencyPathsInFramework(List<List<Dependency>> listOfPaths)
+        /// <summary>
+        /// Print dependency graph with syntax/punctuation.
+        /// </summary>
+        /// <param name="listOfPaths">List of all paths that lead to destination.</param>
+        private void PrintDependencyGraphInFramework(List<List<Dependency>> listOfPaths)
         {
             if (listOfPaths.Count == 0)
             {
+                Console.Write("\t\t");
                 Console.Write("No dependency paths found.");
             }
 
@@ -210,6 +248,10 @@ namespace NuGet.CommandLine.XPlat
             }
         }
 
+        /// <summary>
+        /// Print framework header.
+        /// </summary>
+        /// <param name="frameworkName">Name of framework.</param>
         private void PrintFrameworkHeader(string frameworkName)
         {
             Console.Write("\t");
