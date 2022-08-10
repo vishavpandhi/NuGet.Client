@@ -358,6 +358,15 @@ namespace NuGet.Protocol {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to read the vulnerability information for sources {0}..
+        /// </summary>
+        internal static string Log_FailedToReadVulnerabilityInformation {
+            get {
+                return ResourceManager.GetString("Log_FailedToReadVulnerabilityInformation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to retrieve information about &apos;{0}&apos; from remote source &apos;{1}&apos;..
         /// </summary>
         internal static string Log_FailedToRetrievePackage {
