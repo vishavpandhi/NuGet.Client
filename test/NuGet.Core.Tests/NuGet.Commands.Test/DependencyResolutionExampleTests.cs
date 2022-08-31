@@ -23,7 +23,6 @@ namespace NuGet.Commands.Test
         ///            A 1.0.0 -> C 2.0.0
         ///            A 1.0.0 -> D 1.0.0
         /// </summary>
-        /// <returns></returns>
         [Fact]
         public async Task RestoreCommand_PrunesFurthestNodes()
         {
