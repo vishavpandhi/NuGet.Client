@@ -371,7 +371,7 @@ namespace NuGet.Commands.Test
             return actualAssetTargetFallback;
         }
 
-        private static PackageSpec GetPackageSpecWithProjectNameAndSpec(string projectName, string rootPath, string spec)
+        public static PackageSpec GetPackageSpecWithProjectNameAndSpec(string projectName, string rootPath, string spec)
         {
             var packageSpec = JsonPackageSpecReader.GetPackageSpec(spec, projectName, Path.Combine(rootPath, projectName, projectName)).WithTestRestoreMetadata();
             return packageSpec;

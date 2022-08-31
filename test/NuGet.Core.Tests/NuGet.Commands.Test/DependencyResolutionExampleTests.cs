@@ -1,70 +1,63 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
-using System.Collections.Generic;
+#if DEBUG
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NuGet.Common;
-using NuGet.Configuration;
 using NuGet.Packaging;
-using NuGet.ProjectModel;
 using NuGet.Test.Utility;
 using Xunit;
 
 namespace NuGet.Commands.Test
 {
+    /// <summary>
+    /// These tests represent the scenarios contained in the dependency resolution description document.
+    /// These scenarios are tested in other tests as well, but it is incredibly convenient to have these tests matching the exactly documented scenarios.
+    /// </summary>
     public class DependencyResolutionExampleTests
     {
-
         /// <summary>
-        /// Project -> A 1.0.0 -> B 1.0.0 -> C 1.0.0 -> D 2.0.0
-        ///            A 1.0.0 -> C 2.0.0
-        ///            A 1.0.0 -> D 1.0.0
+        /// Project -> A 1.0.0 -> B 1.0.0
+        ///            B 2.0.0
         /// </summary>
         [Fact]
-        public async Task RestoreCommand_PrunesFurthestNodes()
+        public async Task DirectDependencyWins1()
         {
             // Arrange
             using var pathContext = new SimpleTestPathContext();
-            var logger = new TestLogger();
-            var projectName = "TestProject";
-            var projectPath = Path.Combine(pathContext.SolutionRoot, projectName);
-            var sources = new List<PackageSource> { new PackageSource(pathContext.PackageSource) };
+
+            var project1Json = @"
+                {
+                  ""version"": ""1.0.0"",
+                  ""frameworks"": {
+                    ""net472"": {
+                        ""dependencies"": {
+                            ""A"": ""1.0.0"",
+                            ""B"": ""2.0.0""
+                        }
+                    }
+                  }
+                }";
 
             var A = new SimpleTestPackageContext("A", "1.0.0");
-            var B = new SimpleTestPackageContext("B", "1.0.0");
-            var C100 = new SimpleTestPackageContext("C", "1.0.0");
-            var C200 = new SimpleTestPackageContext("C", "2.0.0");
-            var D100 = new SimpleTestPackageContext("D", "1.0.0");
-            var D200 = new SimpleTestPackageContext("D", "2.0.0");
+            var B100 = new SimpleTestPackageContext("B", "1.0.0");
+            var B200 = new SimpleTestPackageContext("B", "2.0.0");
 
-            B.Dependencies.Add(C100);
-            A.Dependencies.Add(B);
-            A.Dependencies.Add(C200);
-            A.Dependencies.Add(D100);
-            C100.Dependencies.Add(D200);
+            A.Dependencies.Add(B100);
 
             await SimpleTestPackageUtility.CreateFolderFeedV3Async(
                 pathContext.PackageSource,
                 PackageSaveMode.Defaultv3,
                 A,
-                B,
-                C100,
-                C200,
-                D100,
-                D200
+                B100,
+                B200
                 );
 
-            var spec = ProjectTestHelpers.GetPackageSpec(projectName, rootPath: projectPath, framework: "net472", dependencyName: "a");
-
-            var request = new TestRestoreRequest(spec, sources, pathContext.UserPackagesFolder, logger)
-            {
-                LockFilePath = Path.Combine(projectPath, "project.assets.json"),
-                ProjectStyle = ProjectStyle.PackageReference
-            };
-
+            // set up the project
+            var spec = ProjectTestHelpers.GetPackageSpecWithProjectNameAndSpec("project", pathContext.SolutionRoot, project1Json);
+            var request = ProjectTestHelpers.CreateRestoreRequest(spec, pathContext, new TestLogger());
             var command = new RestoreCommand(request);
 
             // Act
@@ -73,161 +66,362 @@ namespace NuGet.Commands.Test
             // Assert
             result.Success.Should().BeTrue();
             result.LogMessages.Should().HaveCount(0);
-            result.LockFile.Libraries.Should().HaveCount(4);
+            result.LockFile.Libraries.Count.Should().Be(2);
+            result.LockFile.Libraries.Single(e => e.Name.Equals("B")).Version.ToString().Should().Be("2.0.0");
             string[] files = Directory.GetFiles(pathContext.UserPackagesFolder, "*.nupkg", SearchOption.AllDirectories);
-            files.Should().HaveCount(4);
+            files.Should().HaveCount(2);
         }
 
+        /// <summary>
+        /// Project -> A 1.0.0 -> B 1.0.0 -> C 1.0.0
+        ///                       C 2.0.0
+        /// </summary>
         [Fact]
-        public async Task RestoreCommand_Custom()
+        public async Task DirectDependencyWins2()
         {
             // Arrange
-            using (var pathContext = new SimpleTestPathContext())
-            {
-                var logger = new TestLogger();
-                var projectName = "TestProject";
-                var projectPath = Path.Combine(pathContext.SolutionRoot, projectName);
-                var sources = new List<PackageSource> { new PackageSource(pathContext.PackageSource) };
+            using var pathContext = new SimpleTestPathContext();
 
-                var project1Json = @"
+            var project1Json = @"
                 {
                   ""version"": ""1.0.0"",
                   ""frameworks"": {
                     ""net472"": {
                         ""dependencies"": {
                             ""A"": ""1.0.0"",
-                            ""B"": ""1.0.0""
                         }
                     }
                   }
                 }";
 
-                var A = new SimpleTestPackageContext("A", "1.0.0");
-                var B = new SimpleTestPackageContext("B", "1.0.0");
-                var C100 = new SimpleTestPackageContext("C", "1.0.0");
-                var C200 = new SimpleTestPackageContext("C", "2.0.0");
-                //var D = new SimpleTestPackageContext("D", "1.0.0");
-                var E = new SimpleTestPackageContext("E", "1.0.0");
-                var F = new SimpleTestPackageContext("F", "1.0.0");
+            var A = new SimpleTestPackageContext("A", "1.0.0");
+            var B100 = new SimpleTestPackageContext("B", "1.0.0");
+            var C100 = new SimpleTestPackageContext("C", "1.0.0");
+            var C200 = new SimpleTestPackageContext("C", "2.0.0");
 
-                B.Dependencies.Add(C200);
-                A.Dependencies.Add(C100);
-                A.Dependencies.Add(E);
-                //D.Dependencies.Add(E);
-                E.Dependencies.Add(F);
-                F.Dependencies.Add(C200);
+            A.Dependencies.Add(B100);
+            A.Dependencies.Add(C200);
+            B100.Dependencies.Add(C100);
 
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                pathContext.PackageSource,
+                PackageSaveMode.Defaultv3,
+                A,
+                B100,
+                C100,
+                C200
+                );
 
-                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
-                    pathContext.PackageSource,
-                    PackageSaveMode.Defaultv3,
-                    A,
-                    B,
-                    C100,
-                    C200,
-                    //D,
-                    E,
-                    F
-                    );
-                // set up the project
+            // set up the project
+            var spec = ProjectTestHelpers.GetPackageSpecWithProjectNameAndSpec("project", pathContext.SolutionRoot, project1Json);
+            var request = ProjectTestHelpers.CreateRestoreRequest(spec, pathContext, new TestLogger());
+            var command = new RestoreCommand(request);
 
-                var spec = JsonPackageSpecReader.GetPackageSpec(project1Json, projectName, Path.Combine(projectPath, $"{projectName}.json")).WithTestRestoreMetadata();
+            // Act
+            var result = await command.ExecuteAsync();
 
-                var request = new TestRestoreRequest(spec, sources, pathContext.UserPackagesFolder, logger)
-                {
-                    LockFilePath = Path.Combine(projectPath, "project.assets.json"),
-                    ProjectStyle = ProjectStyle.PackageReference
-                };
-
-                var command = new RestoreCommand(request);
-
-                // Act
-                var result = await command.ExecuteAsync();
-
-                // Assert
-                result.Success.Should().BeTrue();
-                result.LogMessages.Should().HaveCount(1);
-                var message = result.LogMessages.Single();
-                message.AsRestoreLogMessage().Code.Should().Be(NuGetLogCode.NU1605);
-                message.AsRestoreLogMessage().LibraryId.Should().Be("packageA");
-                result.LockFile.Libraries.Count.Should().Be(1);
-            }
+            // Assert
+            result.Success.Should().BeTrue();
+            result.LogMessages.Should().HaveCount(0);
+            result.LockFile.Libraries.Count.Should().Be(3);
+            result.LockFile.Libraries.Single(e => e.Name.Equals("C")).Version.ToString().Should().Be("2.0.0");
+            string[] files = Directory.GetFiles(pathContext.UserPackagesFolder, "*.nupkg", SearchOption.AllDirectories);
+            files.Should().HaveCount(3);
         }
 
+        /// <summary>
+        /// Project -> A 1.0.0 -> B 1.0.0 -> C 2.0.0
+        ///                       C 1.0.0
+        /// </summary>
         [Fact]
-        public async Task RestoreCommand_Custom2()
+        public async Task DirectDependencyWins3()
         {
             // Arrange
-            using (var pathContext = new SimpleTestPathContext())
-            {
-                var logger = new TestLogger();
-                var projectName = "TestProject";
-                var projectPath = Path.Combine(pathContext.SolutionRoot, projectName);
-                var sources = new List<PackageSource> { new PackageSource(pathContext.PackageSource) };
+            using var pathContext = new SimpleTestPathContext();
 
-                var project1Json = @"
+            var project1Json = @"
                 {
                   ""version"": ""1.0.0"",
                   ""frameworks"": {
                     ""net472"": {
                         ""dependencies"": {
-                            ""C"": ""1.0.0"",
-                            ""E"": ""1.0.0""
+                            ""A"": ""1.0.0"",
                         }
                     }
                   }
                 }";
 
-                var A = new SimpleTestPackageContext("A", "1.0.0");
-                var B = new SimpleTestPackageContext("B", "1.0.0");
-                var C100 = new SimpleTestPackageContext("C", "1.0.0");
-                var C200 = new SimpleTestPackageContext("C", "2.0.0");
-                var D = new SimpleTestPackageContext("D", "1.0.0");
-                var E = new SimpleTestPackageContext("E", "1.0.0");
-                var F = new SimpleTestPackageContext("F", "1.0.0");
+            var A = new SimpleTestPackageContext("A", "1.0.0");
+            var B100 = new SimpleTestPackageContext("B", "1.0.0");
+            var C100 = new SimpleTestPackageContext("C", "1.0.0");
+            var C200 = new SimpleTestPackageContext("C", "2.0.0");
 
-                B.Dependencies.Add(C200);
-                A.Dependencies.Add(D);
-                D.Dependencies.Add(C100);
-                D.Dependencies.Add(E);
-                E.Dependencies.Add(F);
-                F.Dependencies.Add(C200);
+            A.Dependencies.Add(B100);
+            A.Dependencies.Add(C100);
+            B100.Dependencies.Add(C200);
 
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                pathContext.PackageSource,
+                PackageSaveMode.Defaultv3,
+                A,
+                B100,
+                C100,
+                C200
+                );
 
-                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
-                    pathContext.PackageSource,
-                    PackageSaveMode.Defaultv3,
-                    A,
-                    B,
-                    C100,
-                    C200,
-                    D,
-                    E,
-                    F
-                    );
-                // set up the project
+            // set up the project
+            var spec = ProjectTestHelpers.GetPackageSpecWithProjectNameAndSpec("project", pathContext.SolutionRoot, project1Json);
+            var request = ProjectTestHelpers.CreateRestoreRequest(spec, pathContext, new TestLogger());
+            var command = new RestoreCommand(request);
 
-                var spec = JsonPackageSpecReader.GetPackageSpec(project1Json, projectName, Path.Combine(projectPath, $"{projectName}.json")).WithTestRestoreMetadata();
+            // Act
+            var result = await command.ExecuteAsync();
 
-                var request = new TestRestoreRequest(spec, sources, pathContext.UserPackagesFolder, logger)
+            // Assert
+            result.Success.Should().BeTrue();
+            result.LogMessages.Should().HaveCount(1);
+            result.LogMessages[0].Code.Should().Be(NuGetLogCode.NU1605);
+            result.LogMessages[0].AsRestoreLogMessage().LibraryId.Should().Be("C");
+            result.LockFile.Libraries.Count.Should().Be(3);
+            result.LockFile.Libraries.Single(e => e.Name.Equals("C")).Version.ToString().Should().Be("1.0.0");
+            string[] files = Directory.GetFiles(pathContext.UserPackagesFolder, "*.nupkg", SearchOption.AllDirectories);
+            files.Should().HaveCount(3);
+        }
+
+        /// <summary>
+        /// Project -> A 1.0.0 -> B 1.0.0 -> C 2.0.0
+        ///                       C 1.0.0
+        /// Project -> C 3.0.0
+        /// </summary>
+        [Fact]
+        public async Task DirectDependencyWins4()
+        {
+            // Arrange
+            using var pathContext = new SimpleTestPathContext();
+
+            var project1Json = @"
                 {
-                    LockFilePath = Path.Combine(projectPath, "project.assets.json"),
-                    ProjectStyle = ProjectStyle.PackageReference
-                };
+                  ""version"": ""1.0.0"",
+                  ""frameworks"": {
+                    ""net472"": {
+                        ""dependencies"": {
+                            ""A"": ""1.0.0"",
+                            ""C"": ""3.0.0"",
+                        }
+                    }
+                  }
+                }";
 
-                var command = new RestoreCommand(request);
+            var A = new SimpleTestPackageContext("A", "1.0.0");
+            var B100 = new SimpleTestPackageContext("B", "1.0.0");
+            var C100 = new SimpleTestPackageContext("C", "1.0.0");
+            var C200 = new SimpleTestPackageContext("C", "2.0.0");
+            var C300 = new SimpleTestPackageContext("C", "3.0.0");
 
-                // Act
-                var result = await command.ExecuteAsync();
+            A.Dependencies.Add(B100);
+            A.Dependencies.Add(C100);
+            B100.Dependencies.Add(C200);
 
-                // Assert
-                result.Success.Should().BeTrue();
-                result.LogMessages.Should().HaveCount(1);
-                var message = result.LogMessages.Single();
-                message.AsRestoreLogMessage().Code.Should().Be(NuGetLogCode.NU1605);
-                message.AsRestoreLogMessage().LibraryId.Should().Be("packageA");
-                result.LockFile.Libraries.Count.Should().Be(1);
-            }
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                pathContext.PackageSource,
+                PackageSaveMode.Defaultv3,
+                A,
+                B100,
+                C100,
+                C200,
+                C300
+                );
+
+            // set up the project
+            var spec = ProjectTestHelpers.GetPackageSpecWithProjectNameAndSpec("project", pathContext.SolutionRoot, project1Json);
+            var request = ProjectTestHelpers.CreateRestoreRequest(spec, pathContext, new TestLogger());
+            var command = new RestoreCommand(request);
+
+            // Act
+            var result = await command.ExecuteAsync();
+
+            // Assert
+            result.Success.Should().BeTrue();
+            result.LogMessages.Should().HaveCount(0);
+            result.LockFile.Libraries.Count.Should().Be(3);
+            result.LockFile.Libraries.Single(e => e.Name.Equals("C")).Version.ToString().Should().Be("3.0.0");
+            string[] files = Directory.GetFiles(pathContext.UserPackagesFolder, "*.nupkg", SearchOption.AllDirectories);
+            files.Should().HaveCount(3);
+        }
+
+        /// <summary>
+        /// Project -> A 1.0.0 -> B 1.0.0
+        /// Project -> C 2.0.0 -> B 2.0.0
+        /// </summary>
+        [Fact]
+        public async Task CousinDependencies1()
+        {
+            // Arrange
+            using var pathContext = new SimpleTestPathContext();
+
+            var project1Json = @"
+                {
+                  ""version"": ""1.0.0"",
+                  ""frameworks"": {
+                    ""net472"": {
+                        ""dependencies"": {
+                            ""A"": ""1.0.0"",
+                            ""C"": ""2.0.0"",
+                        }
+                    }
+                  }
+                }";
+
+            var A = new SimpleTestPackageContext("A", "1.0.0");
+            var B100 = new SimpleTestPackageContext("B", "1.0.0");
+            var B200 = new SimpleTestPackageContext("B", "2.0.0");
+            var C200 = new SimpleTestPackageContext("C", "2.0.0");
+
+            A.Dependencies.Add(B100);
+            C200.Dependencies.Add(B200);
+
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                pathContext.PackageSource,
+                PackageSaveMode.Defaultv3,
+                A,
+                B100,
+                B200,
+                C200
+                );
+
+            // set up the project
+            var spec = ProjectTestHelpers.GetPackageSpecWithProjectNameAndSpec("project", pathContext.SolutionRoot, project1Json);
+            var request = ProjectTestHelpers.CreateRestoreRequest(spec, pathContext, new TestLogger());
+            var command = new RestoreCommand(request);
+
+            // Act
+            var result = await command.ExecuteAsync();
+
+            // Assert
+            result.Success.Should().BeTrue();
+            result.LogMessages.Should().HaveCount(0);
+            result.LockFile.Libraries.Count.Should().Be(3);
+            result.LockFile.Libraries.Single(e => e.Name.Equals("B")).Version.ToString().Should().Be("2.0.0");
+            string[] files = Directory.GetFiles(pathContext.UserPackagesFolder, "*.nupkg", SearchOption.AllDirectories);
+            files.Should().HaveCount(4);
+        }
+
+        /// <summary>
+        /// Project -> A 1.0.0 -> B 1.0.0 -> D 3.0.0
+        /// Project -> C 2.0.0 -> D 2.0.0
+        /// </summary>
+        [Fact]
+        public async Task CousinDependencies2()
+        {
+            // Arrange
+            using var pathContext = new SimpleTestPathContext();
+
+            var project1Json = @"
+                {
+                  ""version"": ""1.0.0"",
+                  ""frameworks"": {
+                    ""net472"": {
+                        ""dependencies"": {
+                            ""A"": ""1.0.0"",
+                            ""C"": ""2.0.0"",
+                        }
+                    }
+                  }
+                }";
+
+            var A = new SimpleTestPackageContext("A", "1.0.0");
+            var B100 = new SimpleTestPackageContext("B", "1.0.0");
+            var C200 = new SimpleTestPackageContext("C", "2.0.0");
+            var D200 = new SimpleTestPackageContext("D", "2.0.0");
+            var D300 = new SimpleTestPackageContext("D", "3.0.0");
+
+            A.Dependencies.Add(B100);
+            C200.Dependencies.Add(D200);
+            B100.Dependencies.Add(D300);
+
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                pathContext.PackageSource,
+                PackageSaveMode.Defaultv3,
+                A,
+                B100,
+                C200,
+                D200,
+                D300
+                );
+
+            // set up the project
+            var spec = ProjectTestHelpers.GetPackageSpecWithProjectNameAndSpec("project", pathContext.SolutionRoot, project1Json);
+            var request = ProjectTestHelpers.CreateRestoreRequest(spec, pathContext, new TestLogger());
+            var command = new RestoreCommand(request);
+
+            // Act
+            var result = await command.ExecuteAsync();
+
+            // Assert
+            result.Success.Should().BeTrue();
+            result.LogMessages.Should().HaveCount(0);
+            result.LockFile.Libraries.Count.Should().Be(4);
+            result.LockFile.Libraries.Single(e => e.Name.Equals("D")).Version.ToString().Should().Be("3.0.0");
+            string[] files = Directory.GetFiles(pathContext.UserPackagesFolder, "*.nupkg", SearchOption.AllDirectories);
+            files.Should().HaveCount(5);
+        }
+
+        /// <summary>
+        /// Project -> A 1.0.0 = B 1.0.0
+        /// Project -> C 2.0.0 = B 2.0.0
+        /// </summary>
+        [Fact]
+        public async Task CousinDependencies3()
+        {
+            // Arrange
+            using var pathContext = new SimpleTestPathContext();
+
+            var project1Json = @"
+                {
+                  ""version"": ""1.0.0"",
+                  ""frameworks"": {
+                    ""net472"": {
+                        ""dependencies"": {
+                            ""A"": ""1.0.0"",
+                            ""C"": ""2.0.0"",
+                        }
+                    }
+                  }
+                }";
+
+            var A = new SimpleTestPackageContext("A", "1.0.0");
+            var B100 = new SimpleTestPackageContext("B", "1.0.0");
+            var B200 = new SimpleTestPackageContext("B", "2.0.0");
+            var C200 = new SimpleTestPackageContext("C", "2.0.0");
+
+            A.Dependencies.Add(new SimpleTestPackageContext("B", "[1.0.0]")); // TODO NK - Add a range dependency
+            C200.Dependencies.Add(new SimpleTestPackageContext("B", "[2.0.0]"));
+
+            await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                pathContext.PackageSource,
+                PackageSaveMode.Defaultv3,
+                A,
+                B100,
+                B200,
+                C200
+                );
+
+            // set up the project
+            var spec = ProjectTestHelpers.GetPackageSpecWithProjectNameAndSpec("project", pathContext.SolutionRoot, project1Json);
+            var request = ProjectTestHelpers.CreateRestoreRequest(spec, pathContext, new TestLogger());
+            var command = new RestoreCommand(request);
+
+            // Act
+            var result = await command.ExecuteAsync();
+
+            // Assert
+            result.Success.Should().BeFalse();
+            result.LogMessages.Should().HaveCount(1);
+            result.LockFile.Libraries.Count.Should().Be(2);
+            result.LockFile.Libraries.Single(e => e.Name.Equals("B")).Version.ToString().Should().Be("2.0.0");
+            string[] files = Directory.GetFiles(pathContext.UserPackagesFolder, "*.nupkg", SearchOption.AllDirectories);
+            files.Should().HaveCount(2);
         }
     }
 }
+#endif
