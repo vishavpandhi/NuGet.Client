@@ -43,6 +43,9 @@ namespace NuGet.CommandLine
         [Option(typeof(NuGetCommand), "PushCommandSkipDuplicateDescription")]
         public bool SkipDuplicate { get; set; }
 
+        [Option(typeof(NuGetCommand), "PushCommandConfigurationFileDescription")]
+        public string ConfigurationFile { get; set; }
+
         public override async Task ExecuteCommandAsync()
         {
             string packagePath = Arguments[0];
