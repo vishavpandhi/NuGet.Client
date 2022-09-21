@@ -330,6 +330,9 @@ nuget pack foo.nuspec -Version 2.1.0</value>
   <data name="PushCommandSymbolSourceDescription" xml:space="preserve">
     <value>Symbol server URL to push to.</value>
   </data>
+  <data name="PushCommandConfigurationFileDescription" xml:space="preserve">
+    <value>Configuration file to use for pushing all .nupkg files in the current directory to the default push source.</value>
+  </data>
   <data name="PushCommandTimeoutDescription" xml:space="preserve">
     <value>Timeout for pushing to a server in seconds. Defaults to 300 seconds (5 minutes).</value>
   </data>

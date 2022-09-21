@@ -1164,6 +1164,236 @@ namespace NuGet.CommandLine {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_chs {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_chs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_cht {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_cht", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_csy {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_csy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_deu {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_deu", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_esp {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_esp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_fra {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_fra", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_ita {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_ita", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_jpn {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_jpn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_kor {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_kor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_plk {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_plk", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_ptb {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_ptb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_rus {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_rus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget pack
+        ///
+        ///nuget pack foo.nuspec
+        ///
+        ///nuget pack foo.csproj
+        ///
+        ///nuget pack foo.csproj -Build -Symbols -Properties Configuration=Release
+        ///
+        ///nuget pack foo.nuspec -Version 2.1.0.
+        /// </summary>
+        internal static string PackCommandUsageExamples_trk {
+            get {
+                return ResourceManager.GetString("PackCommandUsageExamples_trk", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configuration file to use for pushing all .nupkg files in the current directory to the default push source..
+        /// </summary>
+        internal static string PushCommandConfigurationFileDescription {
+            get {
+                return ResourceManager.GetString("PushCommandConfigurationFileDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Pushes a package to the server and publishes it..
         /// </summary>
         internal static string PushCommandDescription {
