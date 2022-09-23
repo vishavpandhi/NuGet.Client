@@ -1,0 +1,16 @@
+﻿// This file is used by Code Analysis to maintain SuppressMessage
+// attributes that are applied to this project.
+// Project-level suppressions either have no target or are given
+// a specific target and scoped to a namespace, type, member, etc.
+
+using System.Diagnostics.CodeAnalysis;
+
+[assembly: SuppressMessage("Usage", "VSTHRD011:Use AsyncLazy<T>", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.SigningTestFixture.#ctor")]
+[assembly: SuppressMessage("Usage", "VSTHRD002:Avoid problematic synchronous waits", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.SigningTestFixture.Dispose")]
+[assembly: SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.TimestampProviderTests.GetTimestampAsync_TimestampGeneralizedTimeOutsideCertificateValidityPeriod_FailAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.TimestampProviderTests.GetTimestampAsync_WhenCertificateSignatureAlgorithmIsSha1_ThrowsAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.TimestampProviderTests.GetTimestampAsync_WhenRevocationInformationUnavailable_SuccessAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.TimestampProviderTests.GetTimestampAsync_WhenSignatureHashAlgorithmIsSha1_ThrowsAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.TimestampProviderTests.GetTimestampAsync_WhenSigningCertificateNotReturned_ThrowsAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.TimestampProviderTests.GetTimestampAsync_WhenTimestampSigningCertificateRevoked_ThrowsAsync~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Packaging.FuncTest.TimestampProviderTests.GetTimestampAsync_WithFailureReponse_ThrowsAsync~System.Threading.Tasks.Task")]

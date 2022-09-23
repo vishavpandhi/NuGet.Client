@@ -1,0 +1,14 @@
+﻿// This file is used by Code Analysis to maintain SuppressMessage
+// attributes that are applied to this project.
+// Project-level suppressions either have no target or are given
+// a specific target and scoped to a namespace, type, member, etc.
+
+using System.Diagnostics.CodeAnalysis;
+
+[assembly: SuppressMessage("Usage", "VSTHRD010:Invoke single-threaded types on Main thread", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.PackageManagement.VisualStudio.Test.LegacyPackageReferenceProjectTests.GetPackageSpecsAsync_ReadLockFileSettings(System.String,System.String,System.Boolean)~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD010:Invoke single-threaded types on Main thread", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.PackageManagement.VisualStudio.Test.LegacyPackageReferenceProjectTests.GetPackageSpecsAsync_ReadSettingsWithFullPaths(System.String,System.String,System.String)~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD010:Invoke single-threaded types on Main thread", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.PackageManagement.VisualStudio.Test.LegacyPackageReferenceProjectTests.GetPackageSpecsAsync_ReadSettingsWithRelativePaths(System.String,System.String,System.String)~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD010:Invoke single-threaded types on Main thread", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.PackageManagement.VisualStudio.Test.LegacyPackageReferenceProjectTests.GetPackageSpecsAsync_WithPackageTargetFallback_Succeeds~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD010:Invoke single-threaded types on Main thread", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.PackageManagement.VisualStudio.Test.LegacyPackageReferenceProjectTests.GetPackageSpecsAsync_WithRuntimeIdentifiers_GeneratesRuntimeGraph(System.String,System.String,System.String,System.Int32,System.Int32)~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Usage", "VSTHRD012:Provide JoinableTaskFactory where allowed", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.PackageManagement.VisualStudio.Test.NuGetProjectManagerServiceTests.Initialize(System.Collections.Generic.IReadOnlyList{NuGet.Configuration.PackageSource})")]
+[assembly: SuppressMessage("Usage", "VSTHRD010:Invoke single-threaded types on Main thread", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.PackageManagement.VisualStudio.Test.TestVSProjectAdapter.#ctor(System.String,NuGet.VisualStudio.ProjectNames,System.String,System.String,System.String,System.Boolean,System.Collections.Generic.IEnumerable{System.ValueTuple{System.String,System.String}},System.String,System.String)")]
