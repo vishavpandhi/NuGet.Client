@@ -36,6 +36,7 @@
   <ItemGroup>
     <Compile Include="ConsoleInitializer.cs" />
     <Compile Include="DisplayNameAttribute.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HostNameAttribute.cs" />
     <Compile Include="ICommandExpansion.cs" />
     <Compile Include="ICommandExpansionProvider.cs" />
@@ -95,7 +96,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

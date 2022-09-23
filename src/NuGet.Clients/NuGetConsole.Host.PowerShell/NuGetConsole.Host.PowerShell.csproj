@@ -29,7 +29,7 @@
     <Compile Include="Command.cs" />
     <Compile Include="CommandParser.cs" />
     <Compile Include="Common\CommonResources.cs" />
-    <Compile Include="Common\GlobalSuppressions.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Utils\InstalledPackageEnumerator.cs" />
     <Compile Include="IRunspaceManager.cs" />
     <Compile Include="NativeMethods.cs" />
@@ -45,7 +45,6 @@
     <Compile Include="SyncPowerShellHost.cs" />
     <Compile Include="Utils\CommandExpansion.cs" />
     <Compile Include="CommandTokenizer.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Utils\ComplexCommand.cs" />
     <Compile Include="Utils\MethodBinder.cs" />
     <Compile Include="Utils\TypeWrapper.cs" />

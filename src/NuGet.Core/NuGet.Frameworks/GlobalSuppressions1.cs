@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Usage", "VSTHRD011:Use AsyncLazy<T>", Justification = "<Pending>", Scope = "member", Target = "~M:NuGetVSExtension.ShowErrorsCommand.#ctor(System.IServiceProvider)")]
+[assembly: SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>", Scope = "member", Target = "~M:NuGet.Frameworks.FrameworkNameProvider.TryGetPortableProfileNumber(System.String,System.Int32@)~System.Boolean")]

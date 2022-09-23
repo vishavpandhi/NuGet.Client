@@ -10,4 +10,8 @@
 
   <!-- Additional props -->
   <Import Project="common.project.props"/>
+  
+  <PropertyGroup>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>  
 </Project>
