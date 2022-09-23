@@ -8717,15 +8717,6 @@ namespace NuGet.CommandLine {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Configuration file to use for pushing all .nupkg files in the current directory to the default push source..
-        /// </summary>
-        internal static string PushCommandConfigurationFileDescription {
-            get {
-                return ResourceManager.GetString("PushCommandConfigurationFileDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Pushes a package to the server and publishes it..
         /// </summary>
         internal static string PushCommandDescription {
