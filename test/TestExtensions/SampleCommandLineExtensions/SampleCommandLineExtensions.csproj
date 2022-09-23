@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'NuGet.sln'))\build\common.props" />
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
@@ -6,6 +6,7 @@
     <TargetFramework>$(NETFXTargetFramework)</TargetFramework>
     <RootNamespace>SampleCommandLineExtensions</RootNamespace>
     <Description>A sample command-line extension for testing NuGet.exe CLI command extensibility.</Description>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
