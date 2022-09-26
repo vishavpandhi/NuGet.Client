@@ -22,7 +22,7 @@ namespace NuGet.CommandLine.Test
     {
         private const string ApiKeyHeader = "X-NuGet-ApiKey";
         private const string Param_ConfigFile = "-ConfigFile";
-        private const string Param_Source = Param_Source;
+        private const string Param_Source = "-Source";
         private const string Command_Push = "push";
         private static readonly string NuGetExePath = Util.GetNuGetExePath();
         private static readonly string CurrentDirectoryPath = Directory.GetCurrentDirectory();
