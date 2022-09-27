@@ -300,7 +300,7 @@ steps:
 - task: MicroBuildBuildVSBootstrapper@2
   displayName: 'Build a Visual Studio bootstrapper'
   inputs:
-    channelName: "$(VsTargetChannel)"
+    channelName: "$(VsTargetChannelForTests)"
     vsMajorVersion: "$(VsTargetMajorVersion)"
     manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
     outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15'
@@ -311,23 +311,6 @@ steps:
   inputs:
     PathtoPublish: $(Build.StagingDirectory)\MicroBuild\Output
     ArtifactName: MicroBuildOutputs
-    ArtifactType: Container
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
-
-- task: MicroBuildBuildVSBootstrapper@2
-  displayName: 'Build a Visual Studio bootstrapper for tests'
-  inputs:
-    channelName: "$(VsTargetChannelForTests)"
-    vsMajorVersion: "$(VsTargetMajorVersion)"
-    manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
-    outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15\Tests'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
-
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish BootstrapperInfo.json built for tests as a build artifact'
-  inputs:
-    PathtoPublish: $(Build.StagingDirectory)\MicroBuild\Output\Tests
-    ArtifactName: MicroBuildOutputsForTests
     ArtifactType: Container
   condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
