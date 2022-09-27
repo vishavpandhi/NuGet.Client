@@ -125,12 +125,10 @@ stages:
         vsMajorVersion: "$(VsTargetMajorVersion)"
         manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
         outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15'
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish BootstrapperInfo.json as a build artifact'
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish BootstrapperInfo.json as a pipeline artifact'
       inputs:
-        PathtoPublish: $(Pipeline.Workspace)\MicroBuild\Output
-        ArtifactName: MicroBuildOutputs
-        ArtifactType: Container
+        publishLocation: $(Pipeline.Workspace)\MicroBuild\Output
       condition: succeeded()    
     - task: PowerShell@2
       displayName: Set 'VisualStudio.InstallationUnderTest.BootstrapperURL'
