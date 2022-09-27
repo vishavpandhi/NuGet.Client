@@ -323,14 +323,31 @@ steps:
     ArtifactType: Container
   condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
+- task: MicroBuildBuildVSBootstrapper@2
+  displayName: 'Build a Visual Studio bootstrapper for tests'
+  inputs:
+    channelName: "$(VsTargetChannelForTests)"
+    vsMajorVersion: "$(VsTargetMajorVersion)"
+    manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
+    outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15\Tests'
+  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish BootstrapperInfo.json built for tests as a build artifact'
+  inputs:
+    PathtoPublish: $(Build.StagingDirectory)\MicroBuild\Output\Tests
+    ArtifactName: MicroBuildOutputsForTests
+    ArtifactType: Container
+  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+
 - task: PowerShell@1
-  displayName: "Set Bootstrapper URL variable"
+  displayName: "Set Bootstrapper URL variable for tests"
   name: "vsbootstrapper"
   inputs:
     scriptType: "inlineScript"
     inlineScript: |
       try {
-        $json = Get-Content "${env:Build_StagingDirectory}\MicroBuild\Output\Bootstrapperinfo.json" | ConvertFrom-Json
+        $json = Get-Content "${env:Build_StagingDirectory}\MicroBuild\Output\Tests\Bootstrapperinfo.json" | ConvertFrom-Json
         $bootstrapperUrl = $json[0].bootstrapperUrl;
         Write-Host "Bootstrapper URL: $bootstrapperUrl"
         Write-Host "##vso[task.setvariable variable=bootstrapperUrl;isOutput=true]$bootstrapperUrl"
