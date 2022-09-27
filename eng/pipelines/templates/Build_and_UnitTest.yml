@@ -321,7 +321,7 @@ steps:
     scriptType: "inlineScript"
     inlineScript: |
       try {
-        $json = Get-Content "${env:Build_StagingDirectory}\MicroBuild\Output\Tests\Bootstrapperinfo.json" | ConvertFrom-Json
+        $json = Get-Content "${env:Build_StagingDirectory}\MicroBuild\Output\Bootstrapperinfo.json" | ConvertFrom-Json
         $bootstrapperUrl = $json[0].bootstrapperUrl;
         Write-Host "Bootstrapper URL: $bootstrapperUrl"
         Write-Host "##vso[task.setvariable variable=bootstrapperUrl;isOutput=true]$bootstrapperUrl"
