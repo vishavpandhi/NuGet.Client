@@ -304,7 +304,16 @@ steps:
     vsMajorVersion: "$(VsTargetMajorVersion)"
     manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
     outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'), eq(variables['IsOfficialBuild'], 'true'))"
+
+- task: MicroBuildBuildVSBootstrapper@2
+  displayName: 'Build a Visual Studio bootstrapper'
+  inputs:
+    channelName: "int.d17.3"
+    vsMajorVersion: "$(VsTargetMajorVersion)"
+    manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
+    outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15'
+  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'), eq(variables['IsOfficialBuild'], 'false'))"
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish BootstrapperInfo.json as a build artifact'
