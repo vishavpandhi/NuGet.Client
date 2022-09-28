@@ -69,7 +69,7 @@ stages:
       displayName: 'Download buildinfo.json'
     - powershell: |
         try {
-          Write-Host "Set VSBranch variable"
+          Write-Host "Set VSBranch, VsTargetChannel &  VsTargetMajorVersion variables"
           $buildInfoJsonFilePath = "$(Pipeline.Workspace)\ComponentBuildUnderTest\BuildInfo\buildinfo.json"
 
           Write-Host "buildinfo.json drop URI:  $buildInfoJsonFilePath"
@@ -92,10 +92,18 @@ stages:
 
           Write-Host "Target Visual Studio branch: $VSBranch"
           Set-AzurePipelinesVariable 'VSBranch' $VSBranch
+
+          $VsTargetChannel = $buildInfoJson.VsTargetChannel
+          Write-Host "Visual Studio target channel: $VsTargetChannel"
+          Set-AzurePipelinesVariable 'VsTargetChannel' $VsTargetChannel
+
+          $VsTargetMajorVersion = $buildInfoJson.VsTargetMajorVersion
+          Write-Host "Visual Studio major version: $VsTargetMajorVersion"
+          Set-AzurePipelinesVariable 'VsTargetMajorVersion' $VsTargetMajorVersion
         }
         catch {
           Write-Host $_
-          Write-Error "Failed to set VSBranch pipeline variable"
+          Write-Error "Failed to set VSBranch, VsTargetChannel &  VsTargetMajorVersion pipeline variables"
           throw
         }
       displayName: 'Set VSBranch variable'
