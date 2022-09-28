@@ -66,17 +66,12 @@ do
 		Version="latest"
 	else
 		Version=${ChannelAndVersion[1]}
+		export NUGET_DOTNETSDK_VERSION_FOR_TESTING=$Version
 	fi
 	unset IFS
 
-    # The quality option:
-    # Daily links are those from daily builds
-    # Signed have been post-build signed (in the case of 6.0+, pre-6.0 is signed even in daily builds)
-    # Validated have gone through CTI testing and other validation
-    # Preview are released bits that are preview versions
-    # GA are released servicing and GA builds
-	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath"
-    cli/dotnet-install.sh --install-dir cli --channel $Channel --quality signed --version $Version -nopath
+	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --version $Version -nopath"
+	cli/dotnet-install.sh --install-dir cli --channel $Channel --version $Version -nopath
 
 	if (( $? )); then
 		echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
@@ -91,7 +86,10 @@ if (( $? )); then
 	exit 1
 fi
 
-# Install .NET 5 runtimes and .NETCoreapp3.1 runtimes
+# Install .NET 5, 6 runtimes and .NETCoreapp3.1 runtimes
+
+echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 6.0 -nopath"
+cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 6.0 -nopath
 
 echo "cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath"
 cli/dotnet-install.sh --install-dir cli --runtime dotnet --channel 5.0 -nopath

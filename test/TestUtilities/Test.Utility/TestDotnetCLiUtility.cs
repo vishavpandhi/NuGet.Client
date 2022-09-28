@@ -3,17 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using NuGet.Common;
 using NuGet.Frameworks;
-using NuGet.Protocol;
-using NuGet.Test.Utility;
 using NuGet.Versioning;
 
 namespace NuGet.Test.Utility
@@ -32,8 +24,17 @@ namespace NuGet.Test.Utility
             CliDirSource = Path.GetDirectoryName(TestFileSystemUtility.GetDotnetCli());
             SdkDirSource = Path.Combine(CliDirSource, "sdk" + Path.DirectorySeparatorChar);
 
-            // Dynamically determine which SDK version to copy
-            SdkVersion = GetSdkToTestByAssemblyPath(testAssemblyPath);
+            string sdkVersion = Environment.GetEnvironmentVariable("NUGET_DOTNETSDK_VERSION_FOR_TESTING");
+
+            if (string.IsNullOrEmpty(sdkVersion))
+            {
+                // Dynamically determine which SDK version to copy
+                SdkVersion = GetSdkToTestByAssemblyPath(testAssemblyPath);
+            }
+            else
+            {
+                SdkVersion = sdkVersion;
+            }
 
             // Dynamically determine the TFM of the dotnet.dll
             SdkTfm = AssemblyReader.GetTargetFramework(Path.Combine(SdkDirSource, SdkVersion, "dotnet.dll"));
