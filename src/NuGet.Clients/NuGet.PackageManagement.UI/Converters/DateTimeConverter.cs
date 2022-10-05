@@ -42,13 +42,13 @@ namespace NuGet.PackageManagement.UI
                 dateTime = dt;
             }
 
-            if (string.Equals(culture.Name, "ja-JP"))
+            if (string.Equals(culture.Name, "ja-JP", StringComparison.InvariantCulture))
             {
-                return $"{dateTime.ToString("D", culture)} {dateTime.ToString("dddd", culture)} ({ dateTime.ToString("d", culture)})";
+                return $"{dateTime.ToString("D", culture)} {dateTime.ToString("dddd", culture)} ({dateTime.ToString("d", culture)})";
             }
             else
             {
-                return $"{dateTime.ToString("D", culture)} ({ dateTime.ToString("d", culture)})";
+                return $"{dateTime.ToString("D", culture)} ({dateTime.ToString("d", culture)})";
             }
         }
 
