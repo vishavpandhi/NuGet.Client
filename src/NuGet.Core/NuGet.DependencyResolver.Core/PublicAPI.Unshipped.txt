@@ -1,1 +1,2 @@
+NuGet.DependencyResolver.GraphNode<TItem>.GraphNode(NuGet.LibraryModel.LibraryRange key, int dependenciesCount = -1, bool shouldCreateParentNodes = false) -> void
 NuGet.DependencyResolver.GraphNode<TItem>.ParentNodes.get -> System.Collections.Generic.IList<NuGet.DependencyResolver.GraphNode<TItem>>

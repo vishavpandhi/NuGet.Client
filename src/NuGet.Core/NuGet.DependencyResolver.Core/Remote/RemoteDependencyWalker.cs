@@ -70,7 +70,8 @@ namespace NuGet.DependencyResolver
             RuntimeGraph runtimeGraph,
             Func<LibraryRange, (DependencyResult dependencyResult, LibraryDependency conflictingDependency)> predicate,
             GraphEdge<RemoteResolveResult> outerEdge,
-            TransitiveCentralPackageVersions transitiveCentralPackageVersions)
+            TransitiveCentralPackageVersions transitiveCentralPackageVersions,
+            bool shouldCreateParentNodes = false)
         {
             List<LibraryDependency> dependencies = null;
             HashSet<string> runtimeDependencies = null;
@@ -118,17 +119,21 @@ namespace NuGet.DependencyResolver
                 }
             }
 
-            var node = new GraphNode<RemoteResolveResult>(libraryRange)
+            // Resolve the dependency from the cache or sources
+            var item = await ResolverUtility.FindLibraryCachedAsync(
+                _context.FindLibraryEntryCache,
+                libraryRange,
+                framework,
+                runtimeName,
+                _context,
+                CancellationToken.None);
+
+            int innodesSize = item.Data.Dependencies.Count + (dependencies == null ? 0 : dependencies.Count);
+            GraphNode<RemoteResolveResult> node = new GraphNode<RemoteResolveResult>(libraryRange, innodesSize, shouldCreateParentNodes)
             {
-                // Resolve the dependency from the cache or sources
-                Item = await ResolverUtility.FindLibraryCachedAsync(
-                    _context.FindLibraryEntryCache,
-                    libraryRange,
-                    framework,
-                    runtimeName,
-                    _context,
-                    CancellationToken.None)
+                Item = item
             };
+
 
             Debug.Assert(node.Item != null, "FindLibraryCached should return an unresolved item instead of null");
 
@@ -480,7 +485,8 @@ namespace NuGet.DependencyResolver
                     runtimeGraph: runtimeGraph,
                     predicate: ChainPredicate(_ => (DependencyResult.Acceptable, null), rootNode, centralPackageVersionDependency),
                     outerEdge: null,
-                    transitiveCentralPackageVersions: transitiveCentralPackageVersions);
+                    transitiveCentralPackageVersions: transitiveCentralPackageVersions,
+                    shouldCreateParentNodes: true);
 
             node.OuterNode = rootNode;
             node.Item.IsCentralTransitive = true;

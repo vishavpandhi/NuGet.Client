@@ -855,7 +855,7 @@ namespace NuGet.DependencyResolver.Tests
             };
             var parent1 = new GraphNode<RemoteResolveResult>(new LibraryRange("parentname1", VersionRange.Parse("1.0.0"), LibraryDependencyTarget.Package));
             var parent2 = new GraphNode<RemoteResolveResult>(new LibraryRange("parentname2", VersionRange.Parse("1.0.0"), LibraryDependencyTarget.Package));
-            var centralNode = new GraphNode<RemoteResolveResult>(centralPackageVersionDependency.LibraryRange)
+            var centralNode = new GraphNode<RemoteResolveResult>(centralPackageVersionDependency.LibraryRange, -1, true)
             {
                 Item = new GraphItem<RemoteResolveResult>(new LibraryIdentity(centralPackageVersionDependency.LibraryRange.Name, NuGetVersion.Parse("1.0.0"), LibraryType.Package))
             };
