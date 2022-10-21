@@ -134,7 +134,7 @@ stages:
       SDKVersionForBuild: $[stageDependencies.Initialize.Initialize_Build.outputs['getSDKVersionForBuild.SDKVersionForBuild']]
       BuildRTM: "false"
     pool:
-      vmImage: ubuntu-latest
+      vmImage: macOS-latest
     steps:
     - template: Source_Build.yml
 
