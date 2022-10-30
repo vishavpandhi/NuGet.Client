@@ -139,10 +139,10 @@ namespace NuGet.PackageManagement.VisualStudio
             var lockFileFullPath = PackagesConfigLockFileUtility.GetPackagesLockFilePath(ProjectFullPath, GetPropertyValue("NuGetLockFilePath")?.ToString(), ProjectName);
             if (File.Exists(Path.Combine(ProjectFullPath, path))
                 && !fileExistsInProject
-                && !fileName.Equals(ProjectManagement.Constants.PackageReferenceFile)
-                && !fileName.Equals("packages." + ProjectName + ".config")
-                && !fileName.Equals(EnvDteProjectExtensions.WebConfig)
-                && !fileName.Equals(EnvDteProjectExtensions.AppConfig)
+                && !fileName.Equals(ProjectManagement.Constants.PackageReferenceFile, StringComparison.InvariantCulture)
+                && !fileName.Equals("packages." + ProjectName + ".config", StringComparison.InvariantCulture)
+                && !fileName.Equals(EnvDteProjectExtensions.WebConfig, StringComparison.InvariantCulture)
+                && !fileName.Equals(EnvDteProjectExtensions.AppConfig, StringComparison.InvariantCulture)
                 && !fileName.Equals(Path.GetFileName(lockFileFullPath))
                 )
             {

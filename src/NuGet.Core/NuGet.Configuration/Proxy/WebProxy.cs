@@ -97,7 +97,7 @@ namespace NuGet.Configuration
                 return null;
             }
 
-            if (address.IndexOf("://") == -1)
+            if (address.IndexOf("://", StringComparison.InvariantCulture) == -1)
             {
                 address = "http://" + address;
             }

@@ -530,7 +530,7 @@ namespace NuGet.CommandLine.XPlat
             var newProject = new ProjectInstance(projectPath, globalProperties, null);
             newProject.Build(new[] { CollectPackageReferences }, new List<Microsoft.Build.Framework.ILogger> { }, out var targetOutputs);
 
-            return targetOutputs.First(e => e.Key.Equals(CollectPackageReferences)).Value.Items.Select(p =>
+            return targetOutputs.First(e => e.Key.Equals(CollectPackageReferences, StringComparison.Ordinal)).Value.Items.Select(p =>
                 new InstalledPackageReference(p.ItemSpec)
                 {
                     OriginalRequestedVersion = p.GetMetadata("version"),

@@ -32,8 +32,8 @@ namespace NuGet.ProjectModel
             }
 
             if (NuGetFramework.Comparer.Equals(TargetFramework, other.TargetFramework)
-                && string.Equals(RuntimeIdentifier, other.RuntimeIdentifier)
-                && string.Equals(Name, other.Name))
+                && string.Equals(RuntimeIdentifier, other.RuntimeIdentifier, StringComparison.InvariantCulture)
+                && string.Equals(Name, other.Name, StringComparison.InvariantCulture))
             {
                 return Libraries.OrderedEquals(other.Libraries, library => library.Name, StringComparer.OrdinalIgnoreCase);
             }

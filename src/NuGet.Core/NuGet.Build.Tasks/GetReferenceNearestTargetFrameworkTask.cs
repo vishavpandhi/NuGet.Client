@@ -214,7 +214,7 @@ namespace NuGet.Build.Tasks
         private static bool TryParseFramework(string targetFrameworkMoniker, string targetPlatformMoniker, string errorMessage, MSBuildLogger logger, out NuGetFramework nugetFramework)
         {
             // Check if we have a long name.
-            nugetFramework = targetFrameworkMoniker.Contains(',')
+            nugetFramework = targetFrameworkMoniker.Contains(',', StringComparison.InvariantCulture)
                 ? NuGetFramework.ParseComponents(targetFrameworkMoniker, targetPlatformMoniker)
                 : NuGetFramework.Parse(targetFrameworkMoniker);
 
