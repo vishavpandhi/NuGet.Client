@@ -55,7 +55,7 @@ namespace NuGet.Packaging.Xml
                 {
                     elem.Add(new XElement(ns + "requireLicenseAcceptance", metadata.RequireLicenseAcceptance));
                 }
-                var licenseUrlToWrite = metadata.LicenseUrl?.ToString();
+                var licenseUrlToWrite = metadata.LicenseUrl?.AbsoluteUri;
                 if (metadata.LicenseMetadata != null)
                 {
                     var licenseElement = GetXElementFromLicenseMetadata(ns, metadata.LicenseMetadata);
@@ -72,8 +72,8 @@ namespace NuGet.Packaging.Xml
                 AddElementIfNotNull(elem, ns, "icon", metadata.Icon);
                 AddElementIfNotNull(elem, ns, "readme", metadata.Readme);
             }
-            AddElementIfNotNull(elem, ns, "projectUrl", metadata.ProjectUrl);
-            AddElementIfNotNull(elem, ns, "iconUrl", metadata.IconUrl);
+            AddElementIfNotNull(elem, ns, "projectUrl", metadata.ProjectUrl?.AbsoluteUri);
+            AddElementIfNotNull(elem, ns, "iconUrl", metadata.IconUrl?.AbsoluteUri);
             AddElementIfNotNull(elem, ns, "description", metadata.Description);
             AddElementIfNotNull(elem, ns, "summary", metadata.Summary);
             AddElementIfNotNull(elem, ns, "releaseNotes", metadata.ReleaseNotes);
