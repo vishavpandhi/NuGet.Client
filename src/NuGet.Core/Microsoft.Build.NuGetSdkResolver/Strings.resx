@@ -137,11 +137,36 @@
     <value>Failed to resolve SDK '{0}'. Package restore was successful but a package with the ID of "{1}" was not installed.</value>
     <comment>{0} is name of an MSBuild project SDK and {1} is package ID that was installed.</comment>
   </data>
-  <data name="Error_DisabledSdkResolver" xml:space="preserve">
-    <value>The NuGetSdkResolver did not resolve this SDK because it was disabled by the MSBUILDDISABLENUGETSDKRESOLVER environment variable.</value>
+  <data name="SdkResolverIsDisabled" xml:space="preserve">
+    <value>The NuGet-based MSBuild project SDK resolver did not resolve SDK "{0}" because the resolver is disabled by the {1} environment variable.</value>
+    <comment>{0} is the name of the environment variable used to disable the SDK resolver.</comment>
   </data>
-  <data name="Error_NoSdkVersion" xml:space="preserve">
-    <value>The NuGetSdkResolver did not resolve this SDK because there was no version specified in the project or global.json.</value>
+  <data name="NoSdkVersionSpecified" xml:space="preserve">
+    <value>The NuGet-based MSBuild project SDK resolver did not resolve the SDK "{0}" because there was no version specified in the project or global.json.</value>
+    <comment>{0} is the user specified SDK name.</comment>
+  </data>
+  <data name="NoSdkVersionSpecifiedInGlobalJson" xml:space="preserve">
+    <value>The NuGet-based MSBuild project SDK resolver did not resolve the SDK "{0}" because there was no version specified the file "{1}".</value>
+    <comment>{0} is the user specified SDK name and {1} is the full path to a global.json file.</comment>
+  </data>
+  <data name="SdkVersionIsNotValidNuGetVersion" xml:space="preserve">
+    <value>The NuGet-based MSBuild project SDK resolver did not resolve SDK "{0}" because the version specified "{1}" is not a valid NuGet version.</value>
+    <comment>{0} is the user specified SDK name and {1} is the full path to a global.json file.</comment>
+  </data>
+  <data name="UnhandledException" xml:space="preserve">
+    <value>Unhandled exception in NuGet-based MSBuild project SDK resolver.</value>
+  </data>
+  <data name="LocatingSdk" xml:space="preserve">
+    <value>Locating MSBuild project SDK "{0}" version "{1}"...</value>
+    <comment>{0} is the nae of the SDK, {1} is the version</comment>
+  </data>
+  <data name="DownloadingPackage" xml:space="preserve">
+    <value>Downloading SDK package "{0}" version "{1}"...</value>
+    <comment>{0} is the nae of the SDK, {1} is the version</comment>
+  </data>
+  <data name="SuccessfullyDownloadedPackage" xml:space="preserve">
+    <value>Successfully downloaded SDK package "{0}" version "{1}" to "{2}".</value>
+    <comment>{0} is the nae of the SDK, {1} is the version, and {2} is the path to where the package was downloaded to.</comment>
   </data>
   <data name="Error_FailedToReadSettings" xml:space="preserve">
     <value>Failed to load NuGet settings. {0}</value>

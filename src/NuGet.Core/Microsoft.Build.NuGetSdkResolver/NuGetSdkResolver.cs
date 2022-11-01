@@ -2,42 +2,86 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Build.Framework;
 using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Credentials;
+using NuGet.DependencyResolver;
+using NuGet.Frameworks;
 using NuGet.LibraryModel;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
+using NuGet.Packaging.PackageExtraction;
 using NuGet.Packaging.Signing;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using NuGet.RuntimeModel;
 using NuGet.Versioning;
+
+using ILogger = NuGet.Common.ILogger;
 
 namespace Microsoft.Build.NuGetSdkResolver
 {
     /// <summary>
-    /// Represents a NuGet-based SDK resolver.  It is very important that this class does not reference any NuGet assemblies
-    /// directly as an optimization to avoid loading them unless they are needed.  The current implementation only loads
-    /// Newtonsoft.Json if a global.json is found and it contains the msbuild-sdks section and a few NuGet assemblies to parse
-    /// a version.  The remaining NuGet assemblies are then loaded to do a restore.
+    /// Represents a NuGet-based MSBuild project SDK resolver.
     /// </summary>
     public sealed class NuGetSdkResolver : SdkResolver
     {
-        private static readonly Lazy<bool> DisableNuGetSdkResolver = new Lazy<bool>(() => Environment.GetEnvironmentVariable("MSBUILDDISABLENUGETSDKRESOLVER") == "1");
-
-        private static readonly Lazy<object> SettingsLoadContext = new Lazy<object>(() => new SettingsLoadingContext());
-
-        private static readonly Lazy<object> MachineWideSettings = new Lazy<object>(() => new XPlatMachineWideSetting());
-
-        private readonly IGlobalJsonReader _globalJsonReader;
+        /// <summary>
+        /// Stores a cache that stores results for by a <see cref="LibraryIdentity" />.
+        /// </summary>
+        internal static readonly ConcurrentDictionary<LibraryIdentity, Lazy<SdkResult>> ResultCache = new ConcurrentDictionary<LibraryIdentity, Lazy<SdkResult>>();
 
         /// <summary>
-        /// Initializes a new instance of the NuGetSdkResolver class.
+        /// Respresents an environment variable a user can set to disable this SDK resolver.
+        /// </summary>
+        private const string MSBuildDisableNuGetSdkResolver = nameof(MSBuildDisableNuGetSdkResolver);
+
+        /// <summary>
+        /// Stores a value indicating whether or not this SDK resolver has been disabled.
+        /// </summary>
+        private static readonly Lazy<bool> DisableNuGetSdkResolverLazy = new Lazy<bool>(IsDisabled);
+
+        /// <summary>
+        /// Stores a <see cref="LocalPackageFileCache" /> instance for cache package file look ups.
+        /// </summary>
+        private static readonly LocalPackageFileCache LocalPackageFileCache = new LocalPackageFileCache();
+
+        /// <summary>
+        /// Stores an <see cref="IMachineWideSettings" /> instance used for reading machine-wide settings.
+        /// </summary>
+        private static readonly Lazy<IMachineWideSettings> MachineWideSettingsLazy = new Lazy<IMachineWideSettings>(() => new XPlatMachineWideSetting());
+
+        /// <summary>
+        /// Stores a <see cref="SettingsLoadingContext" /> instance used to cache the loading of settings.
+        /// </summary>
+        private static readonly SettingsLoadingContext SettingsLoadContext = new SettingsLoadingContext();
+
+        /// <summary>
+        /// Stores a <see cref="SemaphoreSlim" /> instance used to ensure that this SDK resolver is only ever resolving one SDK at a time.
+        /// </summary>
+        private static readonly SemaphoreSlim SingleResolutionSemaphore = new SemaphoreSlim(initialCount: 1, maxCount: 1);
+
+        /// <summary>
+        /// Stores a <see cref="IGlobalJsonReader" /> instance used to read a global.json.
+        /// </summary>
+        private readonly IGlobalJsonReader _globalJsonReader;
+
+        static NuGetSdkResolver()
+        {
+            SettingsLoadContext.FileRead += (sender, path) => NuGetSdkResolverEventSource.Instance.SettingsFileRead(path);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NuGetSdkResolver" /> class.
         /// </summary>
         public NuGetSdkResolver()
             : this(new GlobalJsonReader())
@@ -45,12 +89,13 @@ namespace Microsoft.Build.NuGetSdkResolver
         }
 
         /// <summary>
-        /// Initializes a new instance of the NuGetSdkResolver class with the specified <see cref="IGlobalJsonReader" />.
+        /// Initializes a new instance of the <see cref="NuGetSdkResolver" /> class with the specified <see cref="IGlobalJsonReader" />.
         /// </summary>
         /// <param name="globalJsonReader">An <see cref="IGlobalJsonReader" /> to use when reading a global.json file.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="globalJsonReader" /> is <c>null</c>.</exception>
         internal NuGetSdkResolver(IGlobalJsonReader globalJsonReader)
         {
-            _globalJsonReader = globalJsonReader;
+            _globalJsonReader = globalJsonReader ?? throw new ArgumentNullException(nameof(globalJsonReader));
         }
 
         /// <inheritdoc />
@@ -59,211 +104,306 @@ namespace Microsoft.Build.NuGetSdkResolver
         /// <inheritdoc />
         public override int Priority => 6000;
 
-        /// <summary>Resolves the specified SDK reference from NuGet.</summary>
-        /// <param name="sdkReference">A <see cref="T:Microsoft.Build.Framework.SdkReference" /> containing the referenced SDKs be resolved.</param>
-        /// <param name="resolverContext">Context for resolving the SDK.</param>
-        /// <param name="factory">Factory class to create an <see cref="T:Microsoft.Build.Framework.SdkResult" /></param>
-        /// <returns>
-        ///     An <see cref="T:Microsoft.Build.Framework.SdkResult" /> containing the resolved SDKs or associated error / reason
-        ///     the SDK could not be resolved.  Return <c>null</c> if the resolver is not
-        ///     applicable for a particular <see cref="T:Microsoft.Build.Framework.SdkReference" />.
-        /// </returns>
+        /// <inheritdoc />
         public override SdkResult Resolve(SdkReference sdkReference, SdkResolverContext resolverContext, SdkResultFactory factory)
         {
-            // Escape hatch to disable this resolver
-            if (DisableNuGetSdkResolver.Value)
+            NuGetSdkResolverEventSource.Instance.ResolveStart(sdkReference.Name, sdkReference.Version);
+
+            try
             {
-                return factory.IndicateFailure(errors: null, warnings: new List<string>() { Strings.Error_DisabledSdkResolver });
+                // The main logger which logs messages back to MSBuild
+                var sdkLogger = new NuGetSdkLogger(resolverContext.Logger);
+
+                // A forwarding logger that logs messages to the main logger and the event source logger
+                var logger = new ForwardingLogger(sdkLogger, NuGetSdkResolverEventSource.Logger);
+
+                // Escape hatch to disable this resolver
+                if (DisableNuGetSdkResolverLazy.Value)
+                {
+                    // The NuGet-based MSBuild project SDK resolver did not resolve SDK "{0}" because the resolver is disabled by the {1} environment variable.
+                    logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.SdkResolverIsDisabled, sdkReference.Name, MSBuildDisableNuGetSdkResolver));
+
+                    return factory.IndicateFailure(errors: sdkLogger.Errors, warnings: sdkLogger.Warnings);
+                }
+
+                // Try to see if a version is specified in the project or in a global.json.  The TryGetNuGetVersionForSdk method will log a reason why a version wasn't found
+                if (!TryGetNuGetVersionForSdk(sdkReference, resolverContext, logger, out NuGetVersion nuGetVersion))
+                {
+                    return factory.IndicateFailure(errors: sdkLogger.Errors, warnings: sdkLogger.Warnings);
+                }
+
+                NuGet.Common.Migrations.MigrationRunner.Run();
+
+                var libraryIdentity = new LibraryIdentity(sdkReference.Name, nuGetVersion, LibraryType.Package);
+
+                Lazy<SdkResult> resultLazy = ResultCache.GetOrAdd(
+                    libraryIdentity,
+                    (key) => new Lazy<SdkResult>(() => GetResult(sdkReference, resolverContext, factory, key, nuGetVersion, sdkLogger, logger)));
+
+                SdkResult result = resultLazy.Value;
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                return factory.IndicateFailure(errors: new[] { Strings.UnhandledException, e.ToString() });
+            }
+            finally
+            {
+                NuGetSdkResolverEventSource.Instance.ResolveStop(sdkReference.Name, sdkReference.Version);
+            }
+        }
+
+        internal SdkResult GetResult(SdkReference sdkReference, SdkResolverContext resolverContext, SdkResultFactory factory, LibraryIdentity libraryIdentity, NuGetVersion nuGetVersion, NuGetSdkLogger sdkLogger, ILogger logger)
+        {
+            // Locating MSBuild project SDK "{0}" version "{1}"...
+            logger.LogVerbose(string.Format(CultureInfo.CurrentCulture, Strings.LocatingSdk, libraryIdentity.Name, libraryIdentity.Version.OriginalVersion));
+
+            NuGetSdkResolverEventSource.Instance.GetResultStart(libraryIdentity.Name, libraryIdentity.Version.OriginalVersion);
+
+            SdkResult result;
+
+            NuGetSdkResolverEventSource.Instance.LoadSettingsStart();
+            ISettings settings;
+            try
+            {
+                settings = Settings.LoadDefaultSettings(resolverContext.ProjectFilePath, configFileName: null, MachineWideSettingsLazy.Value, SettingsLoadContext);
+            }
+            catch (Exception e)
+            {
+                sdkLogger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Error_FailedToReadSettings, e.Message));
+
+                return factory.IndicateFailure(sdkLogger.Errors, sdkLogger.Warnings);
+            }
+            finally
+            {
+                NuGetSdkResolverEventSource.Instance.LoadSettingsStop();
             }
 
+            var versionFolderPathResolver = new VersionFolderPathResolver(SettingsUtility.GetGlobalPackagesFolder(settings));
+
+            string installPath = GetSdkPackageInstallPath(sdkReference.Name, nuGetVersion, versionFolderPathResolver);
+
+            if (!string.IsNullOrWhiteSpace(installPath))
+            {
+                result = factory.IndicateSuccess(installPath, nuGetVersion.ToNormalizedString(), sdkLogger.Warnings);
+            }
+            else
+            {
+                result = RestorePackageAsync(libraryIdentity, resolverContext, factory, settings, versionFolderPathResolver, logger, sdkLogger).ConfigureAwait(continueOnCapturedContext: false).GetAwaiter().GetResult();
+            }
+
+            NuGetSdkResolverEventSource.Instance.GetResultStop(libraryIdentity.Name, libraryIdentity.Version.OriginalVersion, result.Path, result.Success);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Attempts to determine a version to use for the specified MSBuild project SDK.
+        /// </summary>
+        /// <param name="sdkReference">An <see cref="SdkReference" /> containing details about the MSBuild project SDK.</param>
+        /// <param name="resolverContext">An <see cref="SdkResolverContext" /> representing the context under which the MSBuild project SDK is being resolved.</param>
+        /// <param name="logger">An <see cref="ILogger" /> to use to log any messages.</param>
+        /// <param name="nuGetVersion">Receives a <see cref="NuGetVersion" /> for the specified MSBuild project SDK if one was found, otherwise <c>null</c>.</param>
+        /// <returns><c>true</c> if a version was found for the specified MSBuild project SDK, otherwise <c>false</c>.</returns>
+        internal bool TryGetNuGetVersionForSdk(SdkReference sdkReference, SdkResolverContext resolverContext, ILogger logger, out NuGetVersion nuGetVersion)
+        {
             // This resolver only works if the user specifies a version in a project or a global.json.
-            // Ignore invalid versions, there may be another resolver that can handle the version specified
-            if (!TryGetNuGetVersionForSdk(sdkReference.Name, sdkReference.Version, resolverContext, out var parsedSdkVersion))
+            string sdkVersion = sdkReference.Version;
+
+            nuGetVersion = null;
+
+            if (string.IsNullOrWhiteSpace(sdkVersion))
             {
-                return factory.IndicateFailure(errors: null, warnings: new List<string>() { Strings.Error_NoSdkVersion });
-            }
+                Dictionary<string, string> msbuildSdkVersions = _globalJsonReader.GetMSBuildSdkVersions(resolverContext, out string globalJsonFullPath);
 
-            NuGet.Common.Migrations.MigrationRunner.Run();
-
-            return NuGetAbstraction.GetSdkResult(sdkReference, parsedSdkVersion, resolverContext, factory);
-        }
-
-        /// <summary>
-        /// Attempts to determine what version of an SDK to resolve.  A project-specific version is used first and then a version specified in a global.json.
-        /// This method should not consume any NuGet classes directly to avoid loading additional assemblies when they are not needed.  This method
-        /// returns an object so that NuGetVersion is not consumed directly.
-        /// </summary>
-        internal bool TryGetNuGetVersionForSdk(string id, string version, SdkResolverContext context, out object parsedVersion)
-        {
-            if (!string.IsNullOrWhiteSpace(version))
-            {
-                // Use the version specified in the project if it is a NuGet compatible version
-                return NuGetAbstraction.TryParseNuGetVersion(version, out parsedVersion);
-            }
-
-            parsedVersion = null;
-
-            // Don't try to find versions defined in global.json if the project full path isn't set because an in-memory project is being evaluated and there's no
-            // way to be sure where to look
-            if (string.IsNullOrWhiteSpace(context?.ProjectFilePath))
-            {
-                return false;
-            }
-
-            Dictionary<string, string> msbuildSdkVersions = _globalJsonReader.GetMSBuildSdkVersions(context);
-
-            // Check if global.json specified a version for this SDK and make sure its a version compatible with NuGet
-            if (msbuildSdkVersions != null && msbuildSdkVersions.TryGetValue(id, out var globalJsonVersion) &&
-                !string.IsNullOrWhiteSpace(globalJsonVersion))
-            {
-                return NuGetAbstraction.TryParseNuGetVersion(globalJsonVersion, out parsedVersion);
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// IMPORTANT: This class is used to ensure that <see cref="NuGetSdkResolver"/> does not consume any NuGet classes directly.  This ensures that no NuGet assemblies
-        /// are loaded unless they are needed.  Do not implement anything in <see cref="NuGetSdkResolver"/> that uses a NuGet class and instead place it here.
-        /// </summary>
-        private static class NuGetAbstraction
-        {
-            public static SdkResult GetSdkResult(SdkReference sdk, object nuGetVersion, SdkResolverContext context, SdkResultFactory factory)
-            {
-                var logger = new NuGetSdkLogger(context.Logger);
-
-                // Cast the NuGet version since the caller does not want to consume NuGet classes directly
-                var parsedSdkVersion = (NuGetVersion)nuGetVersion;
-
-                // Load NuGet settings and a path resolver
-                ISettings settings;
-                try
+                if (msbuildSdkVersions == null)
                 {
-                    settings = Settings.LoadDefaultSettings(context.ProjectFilePath, configFileName: null, MachineWideSettings.Value as IMachineWideSettings, SettingsLoadContext.Value as SettingsLoadingContext);
-                }
-                catch (Exception e)
-                {
-                    logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Error_FailedToReadSettings, e.Message));
+                    // The NuGet-based MSBuild project SDK resolver did not resolve the SDK "{0}" because there was no version specified in the project or global.json.
+                    logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.NoSdkVersionSpecified, sdkReference.Name));
 
-                    return factory.IndicateFailure(logger.Errors, logger.Warnings);
-                }
-
-                var fallbackPackagePathResolver = new FallbackPackagePathResolver(NuGetPathContext.Create(settings));
-
-                var libraryIdentity = new LibraryIdentity(sdk.Name, parsedSdkVersion, LibraryType.Package);
-
-                // Attempt to find a package if its already installed
-                if (!TryGetMSBuildSdkPackageInfo(fallbackPackagePathResolver, libraryIdentity, out var installedPath, out var installedVersion))
-                {
-                    try
-                    {
-                        DefaultCredentialServiceUtility.SetupDefaultCredentialService(logger, nonInteractive: !context.Interactive);
-
-#if !NETFRAMEWORK
-                        X509TrustStore.InitializeForDotNetSdk(logger);
-#endif
-
-                        // Asynchronously run the restore without a commit which find the package on configured feeds, download, and unzip it without generating any other files
-                        // This must be run in its own task because legacy project system evaluates projects on the UI thread which can cause RunWithoutCommit() to deadlock
-                        // https://developercommunity.visualstudio.com/content/problem/311379/solution-load-never-completes-when-project-contain.html
-                        var restoreTask = Task.Run(() => RestoreRunnerEx.RunWithoutCommit(
-                            libraryIdentity,
-                            settings,
-                            logger));
-
-                        var results = restoreTask.Result;
-
-                        fallbackPackagePathResolver = new FallbackPackagePathResolver(NuGetPathContext.Create(settings));
-
-                        // Look for a successful result, any errors are logged by NuGet
-                        foreach (var result in results.Select(i => i.Result).Where(i => i.Success))
-                        {
-                            // Find the information about the package that was installed.  In some cases, the version can be different than what was specified (like you specify 1.0 but get 1.0.0)
-                            var installedPackage = result.GetAllInstalled().FirstOrDefault(i => i == libraryIdentity);
-
-                            if (installedPackage != null)
-                            {
-                                if (TryGetMSBuildSdkPackageInfo(fallbackPackagePathResolver, installedPackage, out installedPath, out installedVersion))
-                                {
-                                    break;
-                                }
-
-                                // This should never happen because we were told the package was successfully installed.
-                                // If we can't find it, we probably did something wrong with the NuGet API
-                                logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.CouldNotFindInstalledPackage, sdk));
-                            }
-                            else
-                            {
-                                // This should never happen because we were told the restore succeeded.
-                                // If we can't find the package from GetAllInstalled(), we probably did something wrong with the NuGet API
-                                logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.PackageWasNotInstalled, sdk, sdk.Name));
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        logger.LogError(e.ToString());
-                    }
-                    finally
-                    {
-                        // The CredentialService lifetime is for the duration of the process. We should not leave a potentially unavailable logger. 
-                        DefaultCredentialServiceUtility.UpdateCredentialServiceDelegatingLogger(NullLogger.Instance);
-                    }
-                }
-
-                if (logger.Errors.Count == 0)
-                {
-                    return factory.IndicateSuccess(path: installedPath, version: installedVersion, warnings: logger.Warnings);
-                }
-
-                return factory.IndicateFailure(logger.Errors, logger.Warnings);
-            }
-
-            /// <summary>
-            /// Attempts to parse a string as a NuGetVersion and returns an object containing the instance which can be cast later.
-            /// </summary>
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public static bool TryParseNuGetVersion(string version, out object parsed)
-            {
-                if (NuGetVersion.TryParse(version, out var nuGetVersion))
-                {
-                    parsed = nuGetVersion;
-
-                    return true;
-                }
-
-                parsed = null;
-                return false;
-            }
-
-            /// <summary>
-            /// Attempts to find a NuGet package if it is already installed.
-            /// </summary>
-            private static bool TryGetMSBuildSdkPackageInfo(FallbackPackagePathResolver fallbackPackagePathResolver, LibraryIdentity libraryIdentity, out string installedPath, out string installedVersion)
-            {
-                // Find the package
-                var packageInfo = fallbackPackagePathResolver.GetPackageInfo(libraryIdentity.Name, libraryIdentity.Version);
-
-                if (packageInfo == null)
-                {
-                    installedPath = null;
-                    installedVersion = null;
                     return false;
                 }
 
-                // Get the installed path and add the expected "Sdk" folder.  Windows file systems are not case sensitive
-                installedPath = Path.Combine(packageInfo.PathResolver.GetInstallPath(packageInfo.Id, packageInfo.Version), "Sdk");
-
-
-                if (!NuGet.Common.RuntimeEnvironmentHelper.IsWindows && !Directory.Exists(installedPath))
+                if (!msbuildSdkVersions.TryGetValue(sdkReference.Name, out sdkVersion))
                 {
-                    // Fall back to lower case "sdk" folder in case the file system is case sensitive
-                    installedPath = Path.Combine(packageInfo.PathResolver.GetInstallPath(packageInfo.Id, packageInfo.Version), "sdk");
+                    // The NuGet-based MSBuild project SDK resolver did not resolve the SDK "{0}" because there was no version specified the file "{1}".
+                    logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.NoSdkVersionSpecifiedInGlobalJson, sdkReference.Name, globalJsonFullPath));
+
+                    return false;
+                }
+            }
+
+            // Ignore invalid versions, there may be another resolver that can handle the version specified
+            if (!NuGetVersion.TryParse(sdkVersion, out nuGetVersion))
+            {
+                // The NuGet-based MSBuild project SDK resolver did not resolve SDK "{0}" because the version specified "{1}" is not a valid NuGet version.
+                logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.SdkVersionIsNotValidNuGetVersion, sdkReference.Name, sdkVersion));
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string GetSdkPackageInstallPath(string id, NuGetVersion version, VersionFolderPathResolver versionFolderPathResolver)
+        {
+            string installPath = versionFolderPathResolver.GetInstallPath(id, version);
+
+            if (string.IsNullOrWhiteSpace(installPath))
+            {
+                return null;
+            }
+
+            string sdkPath = Path.Combine(installPath, "Sdk");
+
+            if (Directory.Exists(sdkPath))
+            {
+                return sdkPath;
+            }
+
+            sdkPath = Path.Combine(installPath, "sdk");
+
+            if (Directory.Exists(sdkPath))
+            {
+                return sdkPath;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Determines if this SDK resolver has been disabled by the user.
+        /// </summary>
+        /// <returns><c>true</c> if the SDK resolver has been disabled, otherwise <c>false</c>.</returns>
+        private static bool IsDisabled()
+        {
+            string value = Environment.GetEnvironmentVariable(MSBuildDisableNuGetSdkResolver);
+
+            return string.Equals(value, "1", StringComparison.Ordinal) || string.Equals(value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Restores an MSBuild project SDK NuGet package.
+        /// </summary>
+        /// <param name="libraryIdentity">The <see cref="LibraryIdentity" /> of the NuGet package.</param>
+        /// <param name="context">The <see cref="SdkResolverContext" /> under which the MSBuild project SDK is being resolved.</param>
+        /// <param name="factory">An <see cref="SdkResultFactory" /> to use when creating a result</param>
+        /// <param name="settings">The <see cref="ISettings" /> to use when locating the package.</param>
+        /// <param name="versionFolderPathResolver">A <see cref="VersionFolderPathResolver" /> to use when locating the package.</param>
+        /// <param name="logger">A <see cref="ILogger" /> to use when logging messages.</param>
+        /// <param name="sdkLogger">A <see cref="NuGetSdkLogger" /> to use when logging errors or warnings.</param>
+        /// <returns>An <see cref="Task{SdkResult}" /> representing the details of the package if it was found or errors if any occured.</returns>
+        private async Task<SdkResult> RestorePackageAsync(LibraryIdentity libraryIdentity, SdkResolverContext context, SdkResultFactory factory, ISettings settings, VersionFolderPathResolver versionFolderPathResolver, ILogger logger, NuGetSdkLogger sdkLogger)
+        {
+            NuGetSdkResolverEventSource.Instance.WaitForRestoreSemaphoreStart(libraryIdentity.Name, libraryIdentity.Version.OriginalVersion);
+
+            // Only ever resolve one package at a time to reduce the possibilty of thread starvation
+            await SingleResolutionSemaphore.WaitAsync().ConfigureAwait(continueOnCapturedContext: false);
+
+            try
+            {
+                NuGetSdkResolverEventSource.Instance.WaitForRestoreSemaphoreStop(libraryIdentity.Name, libraryIdentity.Version.OriginalVersion);
+
+                NuGetSdkResolverEventSource.Instance.RestorePackageStart(libraryIdentity.Name, libraryIdentity.Version.OriginalVersion);
+
+                // Downloading SDK package "{0}" version "{1}"...
+                logger.LogVerbose(string.Format(CultureInfo.CurrentCulture, Strings.DownloadingPackage, libraryIdentity.Name, libraryIdentity.Version.OriginalVersion));
+
+                DefaultCredentialServiceUtility.SetupDefaultCredentialService(logger, nonInteractive: !context.Interactive);
+
+#if !NETFRAMEWORK
+                X509TrustStore.InitializeForDotNetSdk(logger);
+#endif
+
+                using (var sourceCacheContext = new SourceCacheContext
+                {
+                    IgnoreFailedSources = true,
+                })
+                {
+                    var packageSourceProvider = new PackageSourceProvider(settings);
+
+                    var cachingSourceProvider = new CachingSourceProvider(packageSourceProvider);
+
+                    var remoteWalkContext = new RemoteWalkContext(cacheContext: sourceCacheContext, packageSourceMapping: PackageSourceMapping.GetPackageSourceMapping(settings), logger);
+
+                    foreach (SourceRepository source in SettingsUtility.GetEnabledSources(settings).Select(i => cachingSourceProvider.CreateRepository(i)))
+                    {
+                        SourceRepositoryDependencyProvider remoteProvider = new SourceRepositoryDependencyProvider(
+                            source,
+                            logger,
+                            sourceCacheContext,
+                            sourceCacheContext.IgnoreFailedSources,
+                            ignoreWarning: false,
+                            fileCache: LocalPackageFileCache,
+                            isFallbackFolderSource: false);
+
+                        remoteWalkContext.RemoteLibraryProviders.Add(remoteProvider);
+                    }
+
+                    var walker = new RemoteDependencyWalker(remoteWalkContext);
+
+                    GraphNode<RemoteResolveResult> result = await walker.WalkAsync(libraryIdentity, FrameworkConstants.CommonFrameworks.Net45, null, RuntimeGraph.Empty, recursive: false).ConfigureAwait(continueOnCapturedContext: false);
+
+                    RemoteMatch match = result.Item.Data.Match;
+
+                    if (match == null || match.Library.Type == LibraryType.Unresolved)
+                    {
+                        RestoreLogMessage message = await UnresolvedMessages.GetMessageAsync(
+                            "any/any",
+                            libraryIdentity,
+                            remoteWalkContext.FilterDependencyProvidersForLibrary(match.Library),
+                            remoteWalkContext.PackageSourceMapping.IsEnabled,
+                            remoteWalkContext.RemoteLibraryProviders,
+                            remoteWalkContext.CacheContext,
+                            remoteWalkContext.Logger,
+                            CancellationToken.None).ConfigureAwait(continueOnCapturedContext: false);
+
+                        logger.Log(message);
+
+                        return factory.IndicateFailure(sdkLogger.Errors, sdkLogger.Warnings);
+                    }
+
+                    var packageIdentity = new PackageIdentity(match.Library.Name, match.Library.Version);
+
+                    ClientPolicyContext clientPolicyContext = ClientPolicyContext.GetClientPolicy(settings, logger);
+
+                    var packageExtractionContext = new PackageExtractionContext(PackageSaveMode.Defaultv3, PackageExtractionBehavior.XmlDocFileSaveMode, clientPolicyContext, logger);
+
+                    using (IPackageDownloader downloader = await match.Provider.GetPackageDownloaderAsync(packageIdentity, sourceCacheContext, logger, CancellationToken.None).ConfigureAwait(continueOnCapturedContext: false))
+                    {
+                        bool installed = await PackageExtractor.InstallFromSourceAsync(
+                            packageIdentity,
+                            downloader,
+                            versionFolderPathResolver,
+                            packageExtractionContext,
+                            CancellationToken.None,
+                            parentId: default).ConfigureAwait(continueOnCapturedContext: false);
+
+                        if (installed)
+                        {
+                            string installPath = GetSdkPackageInstallPath(packageIdentity.Id, packageIdentity.Version, versionFolderPathResolver);
+
+                            if (!string.IsNullOrWhiteSpace(installPath))
+                            {
+                                // Successfully downloaded SDK package "{0}" version "{1}" to "{2}".
+                                logger.LogVerbose(string.Format(CultureInfo.CurrentCulture, Strings.SuccessfullyDownloadedPackage, libraryIdentity.Name, libraryIdentity.Version.OriginalVersion, installPath));
+
+                                return factory.IndicateSuccess(installPath, packageIdentity.Version.ToNormalizedString(), sdkLogger.Warnings);
+                            }
+                        }
+                    }
                 }
 
-                installedVersion = packageInfo.Version.ToString();
+                return factory.IndicateFailure(sdkLogger.Errors, sdkLogger.Warnings);
+            }
+            finally
+            {
+                DefaultCredentialServiceUtility.UpdateCredentialServiceDelegatingLogger(NullLogger.Instance);
 
-                return true;
+                NuGetSdkResolverEventSource.Instance.RestorePackageStop(libraryIdentity.Name, libraryIdentity.Version.OriginalVersion);
+
+                SingleResolutionSemaphore.Release();
             }
         }
     }
