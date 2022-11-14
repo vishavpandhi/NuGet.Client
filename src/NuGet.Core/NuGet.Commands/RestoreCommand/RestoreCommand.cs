@@ -145,7 +145,7 @@ namespace NuGet.Commands
 
                 var restoreTime = Stopwatch.StartNew();
 
-                // Local package folders (non-sources)
+                // Local libraryIdentity folders (non-sources)
                 var localRepositories = new List<NuGetv3LocalRepository>
                 {
                     _request.DependencyProviders.GlobalPackages
@@ -262,8 +262,8 @@ namespace NuGet.Commands
                 {
                     // Being in an unsuccessful state before ExecuteRestoreAsync means there was a problem with the
                     // project or we're in locked mode and out of date.
-                    // For example, project TFM or package versions couldn't be parsed. Although the minimal
-                    // fake package spec generated has no packages requested, it also doesn't have any project TFMs
+                    // For example, project TFM or libraryIdentity versions couldn't be parsed. Although the minimal
+                    // fake libraryIdentity spec generated has no packages requested, it also doesn't have any project TFMs
                     // and will generate validation errors if we tried to call ExecuteRestoreAsync. So, to avoid
                     // incorrect validation messages, don't try to restore. It is however, the responsibility for the
                     // caller of RestoreCommand to have provided at least one AdditionalMessage in RestoreArgs.
@@ -294,7 +294,7 @@ namespace NuGet.Commands
 
                 _success &= await ValidateRestoreGraphsAsync(graphs, _logger);
 
-                // Check package compatibility
+                // Check libraryIdentity compatibility
                 checkResults = await VerifyCompatibilityAsync(
                     _request.Project,
                     _includeFlagGraphs,
@@ -350,12 +350,12 @@ namespace NuGet.Commands
                     // Revert to the original case if needed
                     await FixCaseForLegacyReaders(graphs, assetsFile, token);
 
-                    // if lock file was still valid then validate package's sha512 hash or else write
+                    // if lock file was still valid then validate libraryIdentity's sha512 hash or else write
                     // the file if enabled.
                     if (isLockFileValid)
                     {
                         telemetry.StartIntervalMeasure();
-                        // validate package's SHA512
+                        // validate libraryIdentity's SHA512
                         _success &= ValidatePackagesSha512(packagesLockFile, assetsFile);
                         telemetry.EndIntervalMeasure(ValidatePackagesShaDuration);
 
@@ -444,7 +444,7 @@ namespace NuGet.Commands
         private async Task CheckVulnerabilitiesAsync(IEnumerable<RestoreTargetGraph> graphs, ILogger logger, CancellationToken token)
         {
             var vulnerabilityData = await GetAllAvailableVulnerabilityData(logger, token);
-            Dictionary<string, List<VulnerabilityInfoResource.PackageMetadata>> uniqueVulnerabilityData = null;
+            Dictionary<string, VulnerabilityInfoResource.PackageMetadata> uniqueVulnerabilityData = null;
 
             if (vulnerabilityData.Count == 0)
             {
@@ -463,18 +463,17 @@ namespace NuGet.Commands
             {
                 foreach (var graphItem in targetGraph.Flattened.OrderBy(x => x.Key))
                 {
-                    var package = graphItem.Key;
+                    var libraryIdentity = graphItem.Key;
 
-                    if (uniqueVulnerabilityData.TryGetValue(package.Name, out var packageMetadataList))
+                    if (uniqueVulnerabilityData.TryGetValue(libraryIdentity.Name, out var packageMetadataList))
                     {
-                        var vulnerabilities = packageMetadataList.Where(e => e.Version.Equals(package.Version));
-                        foreach (var result in vulnerabilities)
+                        var vulnerabilities = packageMetadataList.Version.FirstOrDefault(e => e.Version.Equals(libraryIdentity.Version));
+                        foreach (var result in vulnerabilities.Vulnerabilities)
                         {
-                            // TODO NK - Figure out the multiple advisories option.
                             var logMessage = RestoreLogMessage.CreateWarning(
                                 NuGetLogCode.NU1901,
-                                string.Format("Package '{0} {1}' has a reported vulnerability. Advisory Url: {2} Severity: {3}", package.Name, package.Version, result.AdvisoryUrl, result.Severity),
-                                package.Name,
+                                string.Format("Package '{0} {1}' has a reported vulnerability. Advisory Url: {2} Severity: {3}", libraryIdentity.Name, libraryIdentity.Version, result.Item1, result.Item2),
+                                libraryIdentity.Name,
                                 targetGraph.TargetGraphName);
                             _logger.Log(logMessage);
                         }
@@ -482,9 +481,9 @@ namespace NuGet.Commands
                 }
             }
 
-            async Task<List<Dictionary<string, List<VulnerabilityInfoResource.PackageMetadata>>>> GetAllAvailableVulnerabilityData(ILogger logger, CancellationToken token)
+            async Task<List<Dictionary<string, VulnerabilityInfoResource.PackageMetadata>>> GetAllAvailableVulnerabilityData(ILogger logger, CancellationToken token)
             {
-                List<Dictionary<string, List<VulnerabilityInfoResource.PackageMetadata>>> vulnerabilityInformationMetadata = new();
+                List<Dictionary<string, VulnerabilityInfoResource.PackageMetadata>> vulnerabilityInformationMetadata = new();
 
                 foreach (var vulnerabilityInfoProvider in _request.DependencyProviders.VulnerabilityInfoProviders)
                 {
@@ -529,7 +528,7 @@ namespace NuGet.Commands
 
             if (restoreRequest.Project.RestoreMetadata.CentralPackageVersionOverrideDisabled)
             {
-                // Emit a error if VersionOverride was specified for a package reference but that functionality is disabled
+                // Emit a error if VersionOverride was specified for a libraryIdentity reference but that functionality is disabled
                 foreach (var item in dependenciesWithVersionOverride)
                 {
                     await _logger.LogAsync(RestoreLogMessage.CreateError(NuGetLogCode.NU1013, string.Format(CultureInfo.CurrentCulture, Strings.Error_CentralPackageVersions_VersionOverrideDisabled, item.Name)));
@@ -540,7 +539,7 @@ namespace NuGet.Commands
 
             if (!restoreRequest.PackageSourceMapping.IsEnabled && httpSourcesCount > 1)
             {
-                // Log a warning if there are more than one configured source and package source mapping is not enabled
+                // Log a warning if there are more than one configured source and libraryIdentity source mapping is not enabled
                 await _logger.LogAsync(RestoreLogMessage.CreateWarning(NuGetLogCode.NU1507, string.Format(CultureInfo.CurrentCulture, Strings.Warning_CentralPackageVersions_MultipleSourcesWithoutPackageSourceMapping, httpSourcesCount, string.Join(", ", restoreRequest.DependencyProviders.RemoteProviders.Where(i => i.IsHttp).Select(i => i.Source.Name)))));
             }
 
@@ -619,7 +618,7 @@ namespace NuGet.Commands
 
                 if (!librariesLookUp.TryGetValue(package, out var sha512) || sha512 != library.Sha512)
                 {
-                    // raise validation error - validate every package regardless of whether we encounter a failure.
+                    // raise validation error - validate every libraryIdentity regardless of whether we encounter a failure.
                     if (errorMessageBuilder == null)
                     {
                         errorMessageBuilder = new StringBuilder();
@@ -867,7 +866,7 @@ namespace NuGet.Commands
         /// Check if the given graphs are valid and log errors/warnings.
         /// If fatal errors are encountered the rest of the errors/warnings
         /// are not logged. This is to avoid flooding the log with long
-        /// dependency chains for every package.
+        /// dependency chains for every libraryIdentity.
         /// </summary>
         private async Task<bool> ValidateRestoreGraphsAsync(IEnumerable<RestoreTargetGraph> graphs, ILogger logger)
         {
@@ -954,7 +953,7 @@ namespace NuGet.Commands
                         var downgraded = downgrade.DowngradedFrom;
                         var downgradedBy = downgrade.DowngradedTo;
 
-                        // Filter out non-package dependencies
+                        // Filter out non-libraryIdentity dependencies
                         if (!ignoreIds.Contains(downgraded.Key.Name))
                         {
                             // Not all dependencies have a min version, if one does not exist use 0.0.0
@@ -1024,7 +1023,7 @@ namespace NuGet.Commands
                         }
                         else
                         {
-                            // Get error counts on a project vs package basis
+                            // Get error counts on a project vs libraryIdentity basis
                             var projectCount = res.Issues.Count(issue => issue.Type == CompatibilityIssueType.ProjectIncompatible);
                             var packageCount = res.Issues.Count(issue => issue.Type != CompatibilityIssueType.ProjectIncompatible);
 
@@ -1068,7 +1067,7 @@ namespace NuGet.Commands
             _logger.LogInformation(string.Format(CultureInfo.CurrentCulture, Strings.Log_RestoringPackages, _request.Project.FilePath));
 
             // Get external project references
-            // If the top level project already exists, update the package spec provided
+            // If the top level project already exists, update the libraryIdentity spec provided
             // with the RestoreRequest spec.
             var updatedExternalProjects = GetProjectReferences();
 
@@ -1247,7 +1246,7 @@ namespace NuGet.Commands
 
                 if (rootProject != null)
                 {
-                    // Replace the project spec with the passed in package spec,
+                    // Replace the project spec with the passed in libraryIdentity spec,
                     // for installs which are done in memory first this will be
                     // different from the one on disk
                     updatedExternalProjects.AddRange(_request.ExternalProjects
@@ -1344,7 +1343,7 @@ namespace NuGet.Commands
                 library.Type = null;
             }
 
-            // Remove the package spec
+            // Remove the libraryIdentity spec
             lockFile.PackageSpec = null;
         }
 
