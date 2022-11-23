@@ -468,14 +468,17 @@ namespace NuGet.Commands
                     if (uniqueVulnerabilityData.TryGetValue(libraryIdentity.Name, out var packageMetadataList))
                     {
                         var vulnerabilities = packageMetadataList.Version.FirstOrDefault(e => e.Version.Equals(libraryIdentity.Version));
-                        foreach (var result in vulnerabilities.Vulnerabilities)
+                        if (vulnerabilities != null)
                         {
-                            var logMessage = RestoreLogMessage.CreateWarning(
-                                NuGetLogCode.NU1901,
-                                string.Format("Package '{0} {1}' has a reported vulnerability. Advisory Url: {2} Severity: {3}", libraryIdentity.Name, libraryIdentity.Version, result.Item1, result.Item2),
-                                libraryIdentity.Name,
-                                targetGraph.TargetGraphName);
-                            _logger.Log(logMessage);
+                            foreach (var result in vulnerabilities.Vulnerabilities)
+                            {
+                                var logMessage = RestoreLogMessage.CreateWarning(
+                                    NuGetLogCode.NU1901,
+                                    string.Format("Package '{0} {1}' has a reported vulnerability. Advisory Url: {2} Severity: {3}", libraryIdentity.Name, libraryIdentity.Version, result.Item1, result.Item2),
+                                    libraryIdentity.Name,
+                                    targetGraph.TargetGraphName);
+                                _logger.Log(logMessage);
+                            }
                         }
                     }
                 }
