@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 namespace NuGet.VisualStudio
@@ -11,8 +10,6 @@ namespace NuGet.VisualStudio
     /// <summary>
     /// Contains methods to discover frameworks and compatibility between frameworks.
     /// </summary>
-    [ComImport]
-    [Guid("3B742C14-3DCB-463D-9198-F0C004BF65DD")]
     public interface IVsFrameworkCompatibility
     {
         /// <summary>

@@ -3,7 +3,6 @@
 
 using System;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,8 +11,6 @@ namespace NuGet.VisualStudio
     /// <summary>
     /// Contains methods to get credentials for NuGet operations.
     /// </summary>
-    [ComImport]
-    [Guid("970BF144-6885-4766-BD85-9DFDFD9DA3C6")]
     public interface IVsCredentialProvider
     {
         /// <summary>

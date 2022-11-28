@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>$(NETFXTargetFramework)</TargetFramework>
+    <TargetFrameworks>$(TargetFrameworksLibrary)</TargetFrameworks>
     <!-- Preview version of Microsoft.VisualStudio.ComponentModelHost causes a NU5104 warning. When upgrading to a stable version of this package, remove the below NoWarn="NU5104". -->
     <NoWarn>$(NoWarn);NU5104;RS0041</NoWarn>
     <Shipping>true</Shipping>
@@ -26,7 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.ComponentModelHost" />
-    <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" />
+    <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" Condition="'$(TargetFramework)' == 'net472' " />
   </ItemGroup>
 
   <ItemGroup>

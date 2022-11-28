@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,8 +11,6 @@ namespace NuGet.SolutionRestoreManager
     /// Represents a package restore service API for integration with a project system.
     /// Implemented by NuGet.
     /// </summary>
-    [ComImport]
-    [Guid("72327117-6552-4685-BD7E-9C40A04B6EE5")]
     public interface IVsSolutionRestoreService4 : IVsSolutionRestoreService3
     {
         /// <summary>

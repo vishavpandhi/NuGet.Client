@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using EnvDTE;
 
 namespace NuGet.VisualStudio
@@ -11,8 +10,6 @@ namespace NuGet.VisualStudio
     /// <summary>
     /// Contains methods to install packages into a project within the current solution.
     /// </summary>
-    [ComImport]
-    [Guid("4F3B122B-A53B-432C-8D85-0FAFB8BE4FF4")]
     public interface IVsPackageInstaller
     {
         /// <summary>

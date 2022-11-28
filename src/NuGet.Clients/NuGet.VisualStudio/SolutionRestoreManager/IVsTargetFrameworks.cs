@@ -1,17 +1,13 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections;
-using System.Runtime.InteropServices;
 
 namespace NuGet.SolutionRestoreManager
 {
     /// <summary>
     /// Represents a collection of target framework metadata items
     /// </summary>
-    [ComImport]
-    [Guid("65f2e8c0-4e5d-4d50-945a-334987decc75")]
     public interface IVsTargetFrameworks : IEnumerable
     {
         /// <summary>

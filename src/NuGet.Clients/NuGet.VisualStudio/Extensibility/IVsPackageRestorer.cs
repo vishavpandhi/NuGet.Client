@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Runtime.InteropServices;
 using EnvDTE;
 
 namespace NuGet.VisualStudio
@@ -9,8 +8,6 @@ namespace NuGet.VisualStudio
     /// <summary>
     /// Contains methods to restore packages installed in a project within the current solution.
     /// </summary>
-    [ComImport]
-    [Guid("CAAEA598-1393-48E7-9617-1C5A62E38ABD")]
     public interface IVsPackageRestorer
     {
         /// <summary>

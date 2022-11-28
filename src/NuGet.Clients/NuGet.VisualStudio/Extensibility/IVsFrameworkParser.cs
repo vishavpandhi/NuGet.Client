@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 namespace NuGet.VisualStudio
@@ -11,8 +10,6 @@ namespace NuGet.VisualStudio
     /// An interface for dealing with the conversion between strings and <see cref="FrameworkName"/>
     /// instances.
     /// </summary>
-    [ComImport]
-    [Guid("E6335CF1-70FE-416A-BA4B-4E92D90934A1")]
     [Obsolete("This API does not support .NET 5 and higher target frameworks with platforms. Use IVsFrameworkParser2 instead.")]
     public interface IVsFrameworkParser
     {

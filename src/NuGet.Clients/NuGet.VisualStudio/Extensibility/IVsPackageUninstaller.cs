@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Runtime.InteropServices;
 using EnvDTE;
 
 namespace NuGet.VisualStudio
@@ -9,8 +8,6 @@ namespace NuGet.VisualStudio
     /// <summary>
     /// Contains methods to uninstall packages from a project within the current solution.
     /// </summary>
-    [ComImport]
-    [Guid("AF63941E-6BA8-4FEC-9827-8E4D1113F231")]
     public interface IVsPackageUninstaller
     {
         /// <summary>

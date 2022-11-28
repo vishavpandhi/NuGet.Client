@@ -4,15 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace NuGet.VisualStudio
 {
     /// <summary>
     /// A public API for retrieving the list of NuGet package sources.
     /// </summary>
-    [ComImport]
-    [Guid("E98A1293-4F14-4CC9-8573-4E3565720AF3")]
     public interface IVsPackageSourceProvider
     {
         /// <summary>

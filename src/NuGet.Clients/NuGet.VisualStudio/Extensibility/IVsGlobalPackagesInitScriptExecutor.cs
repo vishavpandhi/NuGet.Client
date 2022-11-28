@@ -1,5 +1,3 @@
-using System;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace NuGet.VisualStudio
@@ -8,8 +6,6 @@ namespace NuGet.VisualStudio
     /// Execute powershell scripts from package(s) in a solution
     /// </summary>
     /// <remarks>Intended for internal use only.</remarks>
-    [ComImport]
-    [Guid("8c6750b0-214f-4052-93b2-284f12ebb896")]
     public interface IVsGlobalPackagesInitScriptExecutor
     {
         /// <summary>

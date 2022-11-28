@@ -1,15 +1,11 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Runtime.InteropServices;
-
 namespace NuGet.VisualStudio
 {
     /// <summary>
     /// A factory to initialize <see cref="IVsPathContext"/> instances.
     /// </summary>
-    [ComImport]
-    [Guid("5BAC7095-F674-4778-8788-E15FFF77F96B")]
     public interface IVsPathContextProvider
     {
         /// <summary>

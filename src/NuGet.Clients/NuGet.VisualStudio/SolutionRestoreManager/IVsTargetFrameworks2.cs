@@ -3,15 +3,12 @@
 
 using System;
 using System.Collections;
-using System.Runtime.InteropServices;
 
 namespace NuGet.SolutionRestoreManager
 {
     /// <summary>
     /// Represents a collection of target framework metadata items
     /// </summary>
-    [ComImport]
-    [Guid("0C9117CB-828D-4E16-B73F-FEEA9BD6A027")]
     public interface IVsTargetFrameworks2 : IEnumerable
     {
         /// <summary>

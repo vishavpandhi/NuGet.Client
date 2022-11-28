@@ -1,13 +1,9 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Runtime.InteropServices;
-
 namespace NuGet.VisualStudio
 {
     /// <summary>An interface to parse .NET Framework strings. See <a href="http://aka.ms/NuGet-IVsFrameworkParser">http://aka.ms/NuGet-IVsFrameworkParser</a>.</summary>
-    [ComImport]
-    [Guid("F8FB3529-89EC-4538-BC07-A16D764E89B7")]
     public interface IVsFrameworkParser2
     {
         /// <summary>

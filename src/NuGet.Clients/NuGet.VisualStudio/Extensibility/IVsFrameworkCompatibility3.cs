@@ -3,15 +3,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace NuGet.VisualStudio
 {
     /// <summary>
     /// Contains methods to discover frameworks and compatibility between frameworks.
     /// </summary>
-    [ComImport]
-    [Guid("EBE9DECE-1E8F-4769-9D59-59CEE7558124")]
     public interface IVsFrameworkCompatibility3
     {
         /// <summary>

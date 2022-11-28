@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using EnvDTE;
 
 namespace NuGet.VisualStudio
@@ -11,8 +10,6 @@ namespace NuGet.VisualStudio
     /// <summary>
     /// Contains methods to query for installed packages within the current solution.
     /// </summary>
-    [ComImport]
-    [Guid("B858E847-4920-4313-9D3B-176BB0D2F5C2")]
     [Obsolete("Use INuGetProjectService in the NuGet.VisualStudio.Contracts package instead.")]
     public interface IVsPackageInstallerServices
     {
