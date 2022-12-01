@@ -55,6 +55,7 @@
     "Microsoft.VisualStudio.Component.Debugger.JustInTime",
     "Component.Microsoft.VisualStudio.LiveShare",
     "Microsoft.VisualStudio.Component.IntelliCode",
+    "Microsoft.VisualStudio.ComponentGroup.AdditionalWebProjectTemplates",
     "Microsoft.VisualStudio.Component.ClassDesigner",
     "Microsoft.VisualStudio.Component.GraphDocument",
     "Microsoft.VisualStudio.Component.CodeMap",
