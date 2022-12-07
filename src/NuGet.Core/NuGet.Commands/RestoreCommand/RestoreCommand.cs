@@ -457,7 +457,7 @@ namespace NuGet.Commands
             if (vulnerabilityData.Count > 1)
             {
                 uniqueVulnerabilityData = vulnerabilityData[0];
-            }
+            } // Handle the merged data.
 
             foreach (var targetGraph in graphs)
             {
@@ -474,7 +474,7 @@ namespace NuGet.Commands
                             {
                                 var logMessage = RestoreLogMessage.CreateWarning(
                                     NuGetLogCode.NU1901,
-                                    string.Format("Package '{0} {1}' has a reported vulnerability. Advisory Url: {2} Severity: {3}", libraryIdentity.Name, libraryIdentity.Version, result.Item1, result.Item2),
+                                    string.Format("Package '{0} {1}' has a {2} severity vulnerability, {3} ", libraryIdentity.Name, libraryIdentity.Version, GetLogCodeForSeverity(result.Item2), result.Item1),
                                     libraryIdentity.Name,
                                     targetGraph.TargetGraphName);
                                 _logger.Log(logMessage);
@@ -483,6 +483,7 @@ namespace NuGet.Commands
                     }
                 }
             }
+            // Generate a report of the total vulnerabilities.
 
             async Task<List<Dictionary<string, VulnerabilityInfoResource.PackageMetadata>>> GetAllAvailableVulnerabilityData(ILogger logger, CancellationToken token)
             {
@@ -497,6 +498,22 @@ namespace NuGet.Commands
                     }
                 }
                 return vulnerabilityInformationMetadata;
+            }
+
+            NuGetLogCode GetLogCodeForSeverity(int severity)
+            {
+                switch (severity)
+                {
+                    case 0:
+                        return NuGetLogCode.NU1901;
+                    case 1:
+                        return NuGetLogCode.NU1902;
+                    case 2:
+                        return NuGetLogCode.NU1903;
+                    case 3:
+                        return NuGetLogCode.NU1904;
+                }
+                return NuGetLogCode.NU1901;
             }
         }
 
