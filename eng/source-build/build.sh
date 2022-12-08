@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-echo "git config --global protocol.file.allow always"
-git config --global protocol.file.allow always
-
 source="${BASH_SOURCE[0]}"
 scriptroot="$( cd -P "$( dirname "$source" )" && pwd )"
 
