@@ -140,6 +140,7 @@
       <FriendlyName>ProcDump Collector</FriendlyName>
       <Configuration>
         <RootDumpDirectory>C:\Test\Logs\Dumps</RootDumpDirectory>
+        <AttachDumpFilesToResults>true</AttachDumpFilesToResults>
         <Deployment PackageName="Microsoft.DevDiv.TestExtensions.ProcDumpCollector" />
       </Configuration>
     </DataCollector>
