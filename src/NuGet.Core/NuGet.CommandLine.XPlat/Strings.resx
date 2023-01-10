@@ -812,4 +812,8 @@ Non-HTTPS access will be removed in a future version. Consider migrating to 'HTT
     <value>The package reference {0} specifies a VersionOverride but the ability to override a centrally defined version is currently disabled.</value>
     <comment>0 - packagereference name</comment>
   </data>
+  <data name="Error_WorkingDirectoryDoesNotExist" xml:space="preserve">
+    <value>You are passing a 'WORKING_DIRECTORY' argument to config command. But the `{0}` does not exist or you don't have access to it.</value>
+    <comment>0 - The working directory passed to the command.</comment>
+  </data>
 </root>

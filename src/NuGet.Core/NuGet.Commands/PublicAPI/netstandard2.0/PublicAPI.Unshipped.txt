@@ -1,1 +1,16 @@
 #nullable enable
+NuGet.Commands.ConfigArgs
+NuGet.Commands.ConfigArgs.ConfigAction
+NuGet.Commands.ConfigArgs.ConfigArgs() -> void
+NuGet.Commands.ConfigCommandRunner
+NuGet.Commands.ConfigCommandRunner.ConfigCommandRunner() -> void
+NuGet.Commands.IConfigCommandRunner
+~NuGet.Commands.ConfigArgs.Action.get -> NuGet.Commands.ConfigArgs.ConfigAction
+~NuGet.Commands.ConfigArgs.Action.set -> void
+~NuGet.Commands.ConfigArgs.ConfigAction.Paths = 0 -> NuGet.Commands.ConfigArgs.ConfigAction
+~NuGet.Commands.ConfigArgs.Logger.get -> NuGet.Common.ILogger
+~NuGet.Commands.ConfigArgs.Logger.set -> void
+~NuGet.Commands.ConfigArgs.WorkingDirectory.get -> string
+~NuGet.Commands.ConfigArgs.WorkingDirectory.set -> void
+~NuGet.Commands.ConfigCommandRunner.ExecuteCommandAsync(NuGet.Commands.ConfigArgs configArgs) -> System.Threading.Tasks.Task<int>
+~NuGet.Commands.IConfigCommandRunner.ExecuteCommandAsync(ConfigArgs configArgs) -> System.Threading.Tasks.Task<int>
