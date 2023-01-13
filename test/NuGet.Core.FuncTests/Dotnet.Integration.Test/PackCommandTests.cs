@@ -29,7 +29,7 @@ namespace Dotnet.Integration.Test
             msbuildFixture = fixture;
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void CreatePackageWithFiles()
         {
             // Arrange
@@ -77,7 +77,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_NewProject_OutputsInDefaultPaths()
         {
             // Arrange
@@ -98,7 +98,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_NewProject_ContinuousOutputInBothDefaultAndCustomPaths()
         {
             // Arrange
@@ -136,7 +136,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_NewSolution_OutputInDefaultPaths()
         {
             // Arrange
@@ -192,7 +192,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_NewSolution_ContinuousOutputInBothDefaultAndCustomPaths()
         {
             // Arrange
@@ -265,7 +265,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackNewDefaultProject_NupkgExists()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -310,7 +310,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackToolUsingAlias_DoesNotWarnAboutNoExactMatchInDependencyGroupAndLibRefDirectories()
         {
             // Ref: https://github.com/NuGet/Home/issues/10097
@@ -346,7 +346,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackNewDefaultProject_IncludeSymbolsWithSnupkg()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -385,7 +385,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProjectWithPackageType_SnupkgContainsOnlyOnePackageType()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -494,7 +494,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProject_PackageReferenceFloatingVersionRange()
         {
             // Arrange
@@ -559,7 +559,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task PackCommand_PackProject_PackageReferenceAllStableFloatingVersionRange_UsesRestoredVersionInNuspecAsync()
         {
             // Arrange
@@ -643,7 +643,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProject_SupportMultipleFrameworks()
         {
             // Arrange
@@ -734,7 +734,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackProject_DependenciesWithContentFiles_NupkgExcludesContentFilesFromDependencies()
         {
             // Arrange
@@ -912,7 +912,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProject_AddsProjectRefsAsPackageRefs()
         {
             // Arrange
@@ -1246,7 +1246,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProject_PacksFromNuspec()
         {
             var nuspecFileContent = @"<?xml version=""1.0""?>
@@ -1298,7 +1298,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProject_EmptyNuspecFilePropertyWithNuspecProperties()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -1328,7 +1328,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         // This test is asserting that nuspec can be packed via dotnet.exe
         // without having to specify IncludeBuildOutput=false when using the
         // --no-build switch.
@@ -1391,7 +1391,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackNewDefaultProject_InstallPackageToOutputPath()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -1438,7 +1438,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProject_PacksFromNuspec_InstallPackageToOutputPath()
         {
             var nuspecFileContent = @"<?xml version=""1.0""?>
@@ -1559,7 +1559,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackProject_PacksFromNuspecWithBasePath()
         {
             var nuspecFileContent = @"<?xml version=""1.0""?>
@@ -2023,7 +2023,7 @@ namespace Dotnet.Integration.Test
         }
 
 #if NETCOREAPP5_0
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_SingleFramework_GeneratesPackageOnBuildUsingNet5()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2096,7 +2096,7 @@ namespace Dotnet.Integration.Test
         }
 #endif
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_SingleFramework_GeneratesPackageOnBuild()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2226,7 +2226,7 @@ namespace Dotnet.Integration.Test
         }
 
         // This test checks to see that when IncludeBuildOutput=false, the generated nupkg does not contain lib folder
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackNewDefaultProject_IncludeBuildOutputDoesNotCreateLibFolder()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2291,7 +2291,7 @@ namespace Dotnet.Integration.Test
 
         // This test checks to see that when BuildOutputTargetFolder is specified, the generated nupkg has the DLLs in the specified output folder
         // instead of the default lib folder.
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackNewDefaultProject_BuildOutputTargetFolderOutputsLibsToRightFolder()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2326,7 +2326,7 @@ namespace Dotnet.Integration.Test
 
         // This test checks to see that when GeneratePackageOnBuild is set to true, the generated nupkg and the intermediate
         // nuspec is deleted when the clean target is invoked.
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackNewProject_CleanDeletesNupkgAndNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2365,7 +2365,7 @@ namespace Dotnet.Integration.Test
 
         // This test checks to see that when GeneratePackageOnBuild is set to true, the generated nupkg and the intermediate
         // nuspec is deleted when the clean target is invoked and no other nupkg or nuspec file in the PackageOutputPath.
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackNewProject_CleanDeletesOnlyGeneratedNupkgAndNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2530,7 +2530,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_NewProject_AddsTitleToNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2780,7 +2780,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_ContentInnerTargetExtension_SymbolFilesWithoutDll()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2829,7 +2829,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_ContentInnerTargetExtension_Snupkg()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2876,7 +2876,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_ContentInnerTargetExtension_SymbolFilesWithoutBuildOuput()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -2923,7 +2923,8 @@ namespace ClassLibrary
                 }
             }
         }
-        [PlatformFact(Platform.Windows)]
+
+        [Fact]
         public void PackCommand_ContentInnerTargetExtension_SymbolFilesDllWithRecursive()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -3275,7 +3276,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackSolution_AddsProjectRefsAsPackageRefs()
         {
             // Arrange
@@ -3566,7 +3567,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_IncrementalPack_FailsWhenInvokedTwiceInARow()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -3610,7 +3611,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackWithRepositoryVerifyNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -3653,7 +3654,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackWithSourceControlInformation_Unsupported_VerifyNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -3709,7 +3710,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackWithSourceControlInformation_PrivateUrl_VerifyNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -3770,7 +3771,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackWithSourceControlInformation_PublishedUrl_VerifyNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -3831,7 +3832,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackWithSourceControlInformation_ProjectOverride_VerifyNuspec()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -3890,7 +3891,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_ManualAddPackage_DevelopmentDependency()
         {
             // Arrange
@@ -4069,7 +4070,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_BuildOutput_DoesNotContainDefaultExtensions()
         {
             // Arrange
@@ -4164,7 +4165,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_ComplexExpression_WithNonStandardLicense()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4252,7 +4253,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_NonParsableVersionFailsErrorWithCode()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4287,7 +4288,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_ExpressionVersionHigherFailsWithErrorCode()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4394,7 +4395,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_PackBasicLicenseFile_FileNotInPackage()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4431,7 +4432,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_PackBasicLicenseFile_FileIncorrectCasing()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4479,7 +4480,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_PackBasicLicenseFile_FileExtensionNotValid()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4516,7 +4517,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_BothLicenseExpressionAndFile_FailsWithErrorCode()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4551,7 +4552,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_LicenseUrlIsBeingDeprecated()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4596,7 +4597,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_IncludeLicenseFileWithSnupkg()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4682,7 +4683,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackLicense_IncludeLicenseFileWithSymbolsNupkg()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4801,7 +4802,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackEmbedInteropPackage()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -4951,7 +4952,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_WithGeneratePackageOnBuildSet_CanPublish()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -5030,7 +5031,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageIcon_HappyPath_Warns_Succeeds()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5073,7 +5074,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageIcon_MissingFile_Fails()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5093,7 +5094,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageIcon_IncorrectCasing_Fails()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5118,7 +5119,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageIcon_IncorrectFolderCasing_Fails()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5169,7 +5170,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackIcon_WithNuspec_IconUrl_Warns_Succeeds()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5201,7 +5202,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_WhenUsingSemver2Version_NU5105_IsNotRaised()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -5343,7 +5344,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageReadmeFile_BasicFunc_Succeeds()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5385,7 +5386,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageReadmeFile_MissingReadmeFileInPackage_Fails()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5408,7 +5409,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageReadmeFile_MissingReadmeFileInFolder_Fails()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5429,7 +5430,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageReadmeFile_IncorrectReadmeExtension_Fails()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5453,7 +5454,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageReadmeFile_ReadmeFileIsEmpty_Fails()
         {
             var testDirBuilder = TestDirectoryBuilder.Create();
@@ -5477,7 +5478,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_PackageReadmeFile_BasicFunc_WithSymbol_Succeeds()
         {
             // Arrange
@@ -5542,7 +5543,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_DoesNotGenerateOwnersElement()
         {
             using (var testDirectory = msbuildFixture.CreateTestDirectory())
@@ -5579,7 +5580,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_RequireLicenseAcceptanceNotEmittedWhenUnspecified()
         {
             using (var testDirectory = TestDirectory.Create())
@@ -5628,7 +5629,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_RequireLicenseAcceptanceNotEmittedWhenSpecifiedAsDefault()
         {
             using (var testDirectory = TestDirectory.Create())
@@ -5679,7 +5680,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_RequireLicenseAcceptanceEmittedWhenSpecifiedAsTrue()
         {
             using (var testDirectory = TestDirectory.Create())
@@ -6198,7 +6199,7 @@ namespace ClassLibrary
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void PackCommand_WithAllWarningsAsErrorsAndWarningsNotAsErrors_SucceedsAndWarns()
         {
             using var testDirectory = msbuildFixture.CreateTestDirectory();

@@ -26,7 +26,7 @@ namespace Dotnet.Integration.Test
             _msbuildFixture = fixture;
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void DotnetToolTests_NoPackageReferenceToolRestore_ThrowsError()
         {
             using (var testDirectory = _msbuildFixture.CreateTestDirectory())
@@ -47,7 +47,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void DotnetToolTests_RegularDependencyPackageWithDependenciesToolRestore_ThrowsError()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -72,7 +72,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_BasicDotnetToolRestore_SucceedsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -115,7 +115,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_MismatchedRID_FailsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -150,7 +150,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_BasicDotnetToolRestore_WithJsonCompatibleAssets_SucceedsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -240,7 +240,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_RegularDependencyAndToolPackageWithDependenciesToolRestore_ThrowsErrorAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -340,7 +340,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_ToolPackageWithIncompatibleToolsAssets_FailsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -378,7 +378,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_ToolsPackageWithExtraPackageTypes_FailsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -412,7 +412,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_BasicDotnetToolRestoreWithNestedValues_SucceedsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -457,7 +457,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_AutoreferencedDependencyAndToolPackagToolRestore_SucceedsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -509,7 +509,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_AutoreferencedDependencyRegularDependencyAndToolPackagToolRestore_ThrowsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -560,7 +560,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_ToolPackageAndPlatformsPackageAnyRID_SucceedsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -613,7 +613,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_IncompatibleAutorefPackageAndToolsPackageAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -672,7 +672,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_ToolRestoreWithFallback_SucceedsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -729,7 +729,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetToolTests_ToolRestoreWithRuntimeIdentiferGraphPath_SucceedsAsync()
         {
             using (var pathContext = new SimpleTestPathContext())

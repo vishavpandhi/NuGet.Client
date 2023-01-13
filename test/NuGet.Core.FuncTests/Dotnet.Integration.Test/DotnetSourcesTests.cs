@@ -21,7 +21,7 @@ namespace Dotnet.Integration.Test
             _fixture = fixture;
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_WhenAddingSource_GotAdded()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -54,7 +54,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_WhenAddingSourceWithCredentials_CredentialsWereAddedAndEncrypted()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -245,7 +245,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_WarnWhenEnableHttpSource()
         {
             using (TestDirectory configFileDirectory = _fixture.CreateTestDirectory())
@@ -314,7 +314,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_NoWarnWhenDisableHttpSource()
         {
             using (TestDirectory configFileDirectory = _fixture.CreateTestDirectory())
@@ -380,7 +380,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_WhenAddingSourceWithCredentialsInClearText_CredentialsWereAddedAndNotEncrypted()
         {
             using (var pathContext = new SimpleTestPathContext())
@@ -427,7 +427,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_WhenAddingSourceWithCredentialsToUserConfigFile_CredentialsWereAddedAndEncryptedInUserConfigFile()
         {
             // Arrange
@@ -493,7 +493,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_WhenEnablingADisabledSource_SourceBecameEnabled()
         {
             // Arrange
@@ -569,7 +569,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void Sources_WhenDisablingAnEnabledSource_SourceBecameDisabled()
         {
             // Arrange
@@ -687,7 +687,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void List_Sources_LocalizatedPackagesourceKeys_ConsideredDiffererent()
         {
             using (var pathContext = new SimpleTestPathContext())

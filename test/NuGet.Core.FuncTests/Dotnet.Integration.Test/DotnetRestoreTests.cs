@@ -32,7 +32,7 @@ namespace Dotnet.Integration.Test
             _msbuildFixture = fixture;
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void DotnetRestore_SolutionRestoreVerifySolutionDirPassedToProjects()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -588,7 +588,7 @@ EndGlobal";
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void DotnetRestore_WithAuthorSignedPackageAndSignatureValidationModeAsRequired_Succeeds()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -754,7 +754,7 @@ EndGlobal";
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetRestore_ProjectMovedDoesNotRunRestore()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -813,7 +813,7 @@ EndGlobal";
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void DotnetRestore_PackageDownloadSupported_IsSet()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -840,7 +840,7 @@ EndGlobal";
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetRestore_LockedMode_NewProjectOutOfBox()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -907,7 +907,7 @@ EndGlobal";
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void DotnetRestore_LockedMode_Net7WithAndWithoutPlatform()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -943,7 +943,7 @@ EndGlobal";
         /// Create 3 projects, each with their own nuget.config file and source.
         /// When restoring in PackageReference the settings should be found from the project folder.
         /// </summary>
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetRestore_VerifyPerProjectConfigSourcesAreUsedForChildProjectsWithoutSolutionAsync()
         {
             // Arrange
@@ -1043,7 +1043,7 @@ EndGlobal";
         /// Create 3 projects, each with their own nuget.config file and source.
         /// When restoring in PackageReference the settings should be found from the project folder.
         /// </summary>
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetRestore_VerifyPerProjectConfigSourcesAreUsedForChildProjectsWithSolutionAsync()
         {
             // Arrange
@@ -1143,7 +1143,7 @@ EndGlobal";
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetRestore_PackageReferenceWithAliases_ReflectedInTheAssetsFile()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -1191,7 +1191,7 @@ EndGlobal";
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetRestore_MultiTargettingWithAliases_Succeeds()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())
@@ -1577,8 +1577,7 @@ EndGlobal";
             }
         }
 
-
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetRestore_SameNameSameKeyProjectPackageReferencing_Succeeds()
         {
             using (var pathContext = _msbuildFixture.CreateSimpleTestPathContext())

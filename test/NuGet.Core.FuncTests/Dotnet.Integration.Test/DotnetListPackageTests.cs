@@ -30,7 +30,7 @@ namespace Dotnet.Integration.Test
             _fixture = fixture;
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetListPackage_Succeed()
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
@@ -60,7 +60,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetListPackage_NoRestore_Fail()
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
@@ -87,7 +87,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetListPackage_Transitive()
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
@@ -170,7 +170,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetListPackage_InvalidFramework_Fail()
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
@@ -199,11 +199,10 @@ namespace Dotnet.Integration.Test
                     true);
 
                 Assert.False(listResult.Success);
-
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public void DotnetListPackage_DeprecatedAndOutdated_Fail()
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
@@ -221,7 +220,7 @@ namespace Dotnet.Integration.Test
 
         // In 2.2.100 of CLI. DotNet list package would show a section for each TFM and for each TFM/RID.
         // This is testing to ensure that it only shows one section for each TFM.
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetListPackage_ShowFrameworksOnly_SDK()
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
@@ -357,7 +356,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetListPackage_OutdatedWithNoVersionsFound_Succeeds()
         {
             // Arrange
@@ -396,7 +395,7 @@ namespace Dotnet.Integration.Test
 
         // We read the original PackageReference items by calling the CollectPackageReference target.
         // If a project has InitialTargets we need to deal with the response properly in the C# based invocation.
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task DotnetListPackage_ProjectWithInitialTargets_Succeeds()
         {
             using (var pathContext = _fixture.CreateSimpleTestPathContext())
@@ -482,7 +481,7 @@ namespace Dotnet.Integration.Test
             }
         }
 
-        [PlatformFact(Platform.Windows)]
+        [Fact]
         public async Task ListPackage_WithHttpSource_Warns()
         {
             // Arrange
