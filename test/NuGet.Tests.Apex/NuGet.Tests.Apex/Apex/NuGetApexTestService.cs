@@ -93,6 +93,14 @@ namespace NuGet.Tests.Apex
         public void InstallPackage(string projectName, string packageName)
         {
             InstallPackage(projectName, packageName, null);
+
+            NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                System.Diagnostics.Process.GetCurrentProcess().Kill();
+                throw new NotSupportedException("Testing if this crashes VS");
+            });
         }
 
         /// <summary>

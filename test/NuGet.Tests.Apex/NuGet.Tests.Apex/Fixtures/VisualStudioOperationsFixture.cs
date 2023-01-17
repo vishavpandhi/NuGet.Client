@@ -12,7 +12,7 @@ using NuGet.PackageManagement.UI.TestContract;
 
 namespace NuGet.Tests.Apex
 {
-    public class VisualStudioOperationsFixture
+    public class VisualStudioOperationsFixture : VisualStudioHostTest
     {
         private VisualStudioHostConfiguration _visualStudioHostConfiguration;
         private readonly IOperations _operations;
@@ -39,10 +39,11 @@ namespace NuGet.Tests.Apex
             {
                 if (_visualStudioHostConfiguration == null)
                 {
-                    _visualStudioHostConfiguration = new VisualStudioHostConfiguration()
+                    _visualStudioHostConfiguration = new VisualStudioHostConfiguration
                     {
+                        DebuggerCaptureCrashDumps = true,
                         InheritProcessEnvironment = true,
-                        InProcessHostConstraints = new List<ITypeConstraint>() { new NuGetTypeConstraint() }
+                        InProcessHostConstraints = new List<ITypeConstraint>() { new NuGetTypeConstraint() },
                     };
 
                     string[] compositionAssemblies = new[]
@@ -57,6 +58,9 @@ namespace NuGet.Tests.Apex
                         _visualStudioHostConfiguration.AddCompositionAssembly(testAssembly);
                     }
 
+                    _visualStudioHostConfiguration.DebuggerSymbolServerPaths.Add(@"\\symbols\symbols\");
+                    _visualStudioHostConfiguration.DebuggerSymbolServerPaths.Add(@"\\vbbass2\symbols\");
+
                     // If test is being run in VS, "Developer PowerShell" , or "Developer Command Prompt", use the same install of VS.
                     // But don't override Apex's env vars if they have already been set.
                     const string vsUnderTestVariableName = "VisualStudio.InstallationUnderTest.Path";
@@ -67,6 +71,9 @@ namespace NuGet.Tests.Apex
                         {
                             var devenvPath = Path.Combine(vsInstallDir, "devenv.exe");
                             Environment.SetEnvironmentVariable(vsUnderTestVariableName, devenvPath);
+
+                            _visualStudioHostConfiguration.DebuggerCaptureCrashDumps = true;
+                            _visualStudioHostConfiguration.CrashDumpDirectory = new DirectoryInfo(vsInstallDir);
 
                             const string rootSuffixVariableName = "VisualStudio.InstallationUnderTest.RootSuffix";
                             if (Environment.GetEnvironmentVariable(rootSuffixVariableName) == null)
@@ -100,7 +107,7 @@ namespace NuGet.Tests.Apex
             }
         }
 
-        public IOperations Operations
+        public new IOperations Operations
         {
             get { return _operations; }
         }

@@ -13,7 +13,7 @@ namespace NuGet.Tests.Apex
         private VisualStudioHost _visualStudioHost;
         private RetryMessageFilter _messageFilterSingleton;
 
-        public VisualStudioHost VisualStudio
+        public new VisualStudioHost VisualStudio
         {
             get { return _visualStudioHost; }
         }
