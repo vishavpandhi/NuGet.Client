@@ -59,6 +59,7 @@ namespace NuGet.Common.Migrations
         {
             HashSet<string> pathsToCheck = new HashSet<string>();
             var homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            homePath = homePath.TrimEnd(Path.DirectorySeparatorChar);
 
             // NuGetEnvironment.GetFolderPath(SpecialFolder.LocalApplicationData) is private, so we'll get the parent of the HTTP cache.
             var httpCachePath = NuGetEnvironment.GetFolderPath(NuGetFolderPath.HttpCacheDirectory);
@@ -79,6 +80,7 @@ namespace NuGet.Common.Migrations
             // If earlier versions of NuGet was the first app to create these directories, it probably created with too many permissions.
             void AddAllParentDirectoriesUpToHome(string path)
             {
+                path = path.TrimEnd(Path.DirectorySeparatorChar);
                 pathsToCheck.Add(path);
 
                 if (!path.StartsWith(homePath + Path.DirectorySeparatorChar, StringComparison.Ordinal))
@@ -87,7 +89,8 @@ namespace NuGet.Common.Migrations
                 }
 
                 string parent = Path.GetDirectoryName(path);
-                while (parent != homePath)
+                while (!string.IsNullOrEmpty(parent) &&
+                    parent != homePath)
                 {
                     pathsToCheck.Add(parent);
                     parent = Path.GetDirectoryName(parent);
