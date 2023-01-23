@@ -17,6 +17,14 @@
                     <ResultsDirectory>%AGENT_TEMPDIRECTORY%</ResultsDirectory>
                 </Configuration>
             </DataCollector>
+            <DataCollector friendlyName="XPlat code coverage">
+                <Configuration>
+                <Format>opencover,cobertura</Format>
+                <UseSourceLink>true</UseSourceLink>
+                <IncludeTestAssembly>false</IncludeTestAssembly>
+                <SkipAutoProps>true</SkipAutoProps>
+                </Configuration>
+            </DataCollector>
         </DataCollectors>
     </DataCollectionRunSettings>
 </RunSettings>
