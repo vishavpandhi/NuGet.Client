@@ -67,6 +67,8 @@ steps:
       --logger:"trx;LogFileName=$(Build.Repository.LocalPath)\\build\\TestResults\CrossVerifyTests-vsts.trx" `
       --logger:"console;verbosity=detailed" `
       --settings:$(Build.Repository.LocalPath)\build\xunit.runsettings
+       /p:CollectCoverage=true
+       /p:CoverletOutputFormat=cobertura
   condition: "and(succeeded(), not(eq(variables['IsOfficialBuild'], 'true')))"
 
 - task: PublishTestResults@2
