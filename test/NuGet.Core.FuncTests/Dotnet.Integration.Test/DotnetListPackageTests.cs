@@ -514,6 +514,45 @@ namespace Dotnet.Integration.Test
             Assert.True(lines.Any(l => l.Contains("warn : You are running the 'list package' operation with an 'HTTP' source")), listResult.AllOutput);
         }
 
+        [PlatformTheory(Platform.Windows)]
+        [InlineData("", "net48")]
+        [InlineData("", "net46")]
+        [InlineData("--framework net46 --framework net48", "net48")]
+        [InlineData("--framework net46 --framework net48", "net46")]
+        [InlineData("--framework net46", "net46")]
+        [InlineData("--framework net48", "net48")]
+        public async Task DotnetListPackage_FrameworkSpecific_JsonOutput_Success(string args, string jsonResource)
+        {
+            // Arrange
+            using (var pathContext = _fixture.CreateSimpleTestPathContext())
+            {
+                var projectA = XPlatTestUtils.CreateProject(ProjectName, pathContext, "net46;net48");
+                var packageX = XPlatTestUtils.CreatePackage(frameworkString: "net46;net48");
+
+                // Generate Package
+                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packageX);
+
+                // Act
+                var addResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
+                    $"add {projectA.ProjectPath} package packageX --no-restore");
+                Assert.True(addResult.Success);
+
+                var restoreResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
+                    $"restore {projectA.ProjectName}.csproj");
+                Assert.True(restoreResult.Success);
+
+                var listResult = _fixture.RunDotnet(Directory.GetParent(projectA.ProjectPath).FullName,
+                    $"list {projectA.ProjectPath} package {args} --format json");
+
+                // Assert
+                var expectedJson = Encoding.Default.GetString(GetTestUtilityResource(jsonResource));
+                Assert.Equal(expectedJson, listResult.AllOutput);
+            }
+        }
+
         private static string CollapseSpaces(string input)
         {
             return Regex.Replace(input, " +", " ");
@@ -545,6 +584,20 @@ namespace Dotnet.Integration.Test
                 }
             }
             return true;
+        }
+
+        //private static List<ListPackageReportModel> GetTestUtilityResource(string name)
+        //{
+        //    return ResourceTestUtility.GetJsonTestData<ListPackageReportModel>(
+        //        $"Test.Utility.compiler.resources.{name}",
+        //        typeof(ResourceTestUtility));
+        //}
+
+        private static byte[] GetTestUtilityResource(string name)
+        {
+            return ResourceTestUtility.GetResourceBytes(
+                $"Test.Utility.compiler.resources.{name}",
+                typeof(ResourceTestUtility));
         }
     }
 }
