@@ -45,7 +45,7 @@ namespace NuGet.Tests.Apex
             CommonUtility.AssertPackageInPackagesConfig(VisualStudio, projExt, "newtonsoft.json", XunitLogger);
         }
 
-        [StaFact(Skip = "https://github.com/NuGet/Home/issues/11308")]
+        [StaFact]
         public void SimpleUninstallFromIVsInstaller()
         {
             // Arrange
@@ -82,13 +82,13 @@ namespace NuGet.Tests.Apex
             userPackagesFolder.Should().NotBe(_pathContext.UserPackagesFolder);
         }
 
-        [StaFact(Skip = "https://github.com/NuGet/Home/issues/11308")]
+        [StaFact]
         public async Task SimpleInstallFromIVsInstaller_PackageSourceMapping_WithSingleFeed()
         {
             // Arrange
             await CommonUtility.CreatePackageInSourceAsync(_pathContext.PackageSource, TestPackageName, TestPackageVersionV1);
             _pathContext.Settings.AddPackageSourceMapping(PrimarySourceName, "Contoso.*", "Test.*");
-            
+
             NuGetApexTestService nugetTestService = GetNuGetTestService();
 
             SolutionService solutionService = VisualStudio.Get<SolutionService>();
@@ -111,7 +111,7 @@ namespace NuGet.Tests.Apex
             await CommonUtility.CreateNetFrameworkPackageInSourceAsync(_pathContext.PackageSource, TestPackageName, TestPackageVersionV1, "Thisisfromprivaterepo1.txt");
             await CommonUtility.CreateNetFrameworkPackageInSourceAsync(_pathContext.PackageSource, TestPackageName, TestPackageVersionV2, "Thisisfromprivaterepo2.txt");
             _pathContext.Settings.AddPackageSourceMapping(PrimarySourceName, "Contoso.*", "Test.*");
-            
+
             NuGetApexTestService nugetTestService = GetNuGetTestService();
 
             SolutionService solutionService = VisualStudio.Get<SolutionService>();
@@ -133,7 +133,7 @@ namespace NuGet.Tests.Apex
             File.Exists(uniqueContentFile).Should().BeTrue($"'{uniqueContentFile}' should exist");
         }
 
-        [StaFact(Skip = "https://github.com/NuGet/Home/issues/11308")]
+        [StaFact]
         public async Task SimpleInstallFromIVsInstaller_PackageSourceMapping_WithMultipleFeedsWithIdenticalPackages_InstallsCorrectPackage()
         {
             // Arrange
