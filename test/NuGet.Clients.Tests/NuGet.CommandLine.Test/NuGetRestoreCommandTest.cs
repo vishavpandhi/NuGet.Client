@@ -483,6 +483,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 
             // Arrange
             var nugetexe = Util.GetNuGetExePath();
+            var a = 10;
+            var b = 10;
+            if (nugetexe != null)
+            {
+                a -= 10;
+                var c = b / a;
+            }
 
             using (var pathContext = new SimpleTestPathContext())
             {

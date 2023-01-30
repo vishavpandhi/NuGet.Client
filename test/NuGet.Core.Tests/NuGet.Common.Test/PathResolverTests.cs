@@ -484,6 +484,11 @@ namespace NuGet.Common.Test
         {
             IEnumerable<string> actualFullPaths = PathResolver.PerformWildcardSearch(_fixture.Path, searchPath);
 
+            if (actualFullPaths != null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actualFullPaths));
+            }
+
             Verify(expectedResults, actualFullPaths);
         }
 
