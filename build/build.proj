@@ -386,7 +386,7 @@
     </ItemGroup>
 
     <PropertyGroup Condition=" '$(SkipDesktopAssemblies)' != 'true' ">
-      <DesktopTestCommand>&quot;$(DotnetExePath)&quot; test @(DesktopInputTestAssemblies->'&quot;%(Identity)&quot;', ' ') --logger:&quot;console;verbosity=$(DotNetTestConsoleVerbosity)&quot; --settings:&quot;$(MSBuildThisFileDirectory)xunit.runsettings&quot; --ResultsDirectory:&quot;$(TestResultsDirectory)&quot; --logger:&quot;trx&quot;</DesktopTestCommand>
+      <DesktopTestCommand>&quot;$(DotnetExePath)&quot; test @(DesktopInputTestAssemblies->'&quot;%(Identity)&quot;', ' ') --logger:&quot;console;verbosity=$(DotNetTestConsoleVerbosity)&quot; --settings:&quot;$(MSBuildThisFileDirectory)xunit.runsettings&quot; --ResultsDirectory:&quot;$(TestResultsDirectory)&quot; --logger:&quot;trx&quot;  /p:CollectCoverage=true</DesktopTestCommand>
     </PropertyGroup>
 
     <ItemGroup Condition=" '$(SkipCoreAssemblies)' != 'true' ">
@@ -394,7 +394,7 @@
     </ItemGroup>
     
     <PropertyGroup Condition=" '$(SkipCoreAssemblies)' != 'true' ">
-      <CoreTestCommand>&quot;$(DotnetExePath)&quot; test @(CoreInputTestAssemblies->'&quot;%(Identity)&quot;', ' ') --logger:&quot;console;verbosity=$(DotNetTestConsoleVerbosity)&quot; --settings:&quot;$(MSBuildThisFileDirectory)xunit.runsettings&quot; --ResultsDirectory:&quot;$(TestResultsDirectory)&quot; --logger:&quot;trx&quot;</CoreTestCommand>
+      <CoreTestCommand>&quot;$(DotnetExePath)&quot; test @(CoreInputTestAssemblies->'&quot;%(Identity)&quot;', ' ') --logger:&quot;console;verbosity=$(DotNetTestConsoleVerbosity)&quot; --settings:&quot;$(MSBuildThisFileDirectory)xunit.runsettings&quot; --ResultsDirectory:&quot;$(TestResultsDirectory)&quot; --logger:&quot;trx&quot; /p:CollectCoverage=true</CoreTestCommand>
     </PropertyGroup>
 
     <!-- Desktop -->

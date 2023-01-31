@@ -161,7 +161,7 @@ steps:
   inputs:
     solution: "build\\build.proj"
     configuration: "$(BuildConfiguration)"
-    msbuildArguments: "/restore:false /target:CoreUnitTests;UnitTestsVS /property:BuildRTM=$(BuildRTM) /property:BuildNumber=$(BuildNumber) /property:SkipILMergeOfNuGetExe=true /binarylogger:$(Build.StagingDirectory)\\binlog\\07.RunUnitTests.binlog"
+    msbuildArguments: "/restore:false /target:CoreUnitTests;UnitTestsVS /property:BuildRTM=$(BuildRTM) /property:BuildNumber=$(BuildNumber) /property:SkipILMergeOfNuGetExe=true /binarylogger:$(Build.StagingDirectory)\\binlog\\07.RunUnitTests.binlog /p:CollectCoverage=true"
   condition: "and(succeeded(), eq(variables['BuildRTM'], 'true'), not(eq(variables['IsOfficialBuild'], 'true')))"
 
 - task: MSBuild@1
@@ -170,7 +170,7 @@ steps:
   inputs:
     solution: "build\\build.proj"
     configuration: "$(BuildConfiguration)"
-    msbuildArguments: "/restore:false /target:CoreUnitTests;UnitTestsVS /property:BuildRTM=$(BuildRTM) /property:BuildNumber=$(BuildNumber) /property:SkipILMergeOfNuGetExe=true /binarylogger:$(Build.StagingDirectory)\\binlog\\08.RunUnitTests.binlog"
+    msbuildArguments: "/restore:false /target:CoreUnitTests;UnitTestsVS /property:BuildRTM=$(BuildRTM) /property:BuildNumber=$(BuildNumber) /property:SkipILMergeOfNuGetExe=true /binarylogger:$(Build.StagingDirectory)\\binlog\\08.RunUnitTests.binlog /p:CollectCoverage=true"
   condition: "and(succeeded(), eq(variables['BuildRTM'], 'true'), eq(variables['IsOfficialBuild'], 'true'))"
 
 - task: PublishTestResults@2
