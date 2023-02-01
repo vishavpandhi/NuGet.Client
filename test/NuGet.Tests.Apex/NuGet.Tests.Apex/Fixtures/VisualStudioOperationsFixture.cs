@@ -44,7 +44,11 @@ namespace NuGet.Tests.Apex
                         DebuggerCaptureCrashDumps = true,
                         InheritProcessEnvironment = true,
                         InProcessHostConstraints = new List<ITypeConstraint>() { new NuGetTypeConstraint() },
-                    };
+                        CrashDumpDirectory = new DirectoryInfo(@"C:\Users\mruizmares\Documents")
+                };
+
+                    _visualStudioHostConfiguration.DebuggerSymbolServerPaths.Add(@"\\symbols\symbols\");
+                    _visualStudioHostConfiguration.DebuggerSymbolServerPaths.Add(@"\\vbbass2\symbols\");
 
                     string[] compositionAssemblies = new[]
                     {

@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Test.Apex.VisualStudio;
 using Microsoft.Test.Apex.VisualStudio.Solution;
 using NuGet.Test.Utility;
 using Xunit;
@@ -33,9 +34,15 @@ namespace NuGet.Tests.Apex
             // Arrange
             NuGetApexTestService nugetTestService = GetNuGetTestService();
 
-            SolutionService solutionService = VisualStudio.Get<SolutionService>();
-            solutionService.CreateEmptySolution();
-            ProjectTestExtension projExt = solutionService.AddProject(ProjectLanguage.CSharp, ProjectTemplate.ClassLibrary, ProjectTargetFramework.V46, "TestProject");
+            //SolutionService solutionService = VisualStudio.Get<SolutionService>();
+            //solutionService.CreateEmptySolution();
+            //ProjectTestExtension projExt = solutionService.AddProject(ProjectLanguage.CSharp, ProjectTemplate.ClassLibrary, ProjectTargetFramework.V46, "TestProject");
+
+            VisualStudioHostObjectModel vs = VisualStudio.ObjectModel;
+            vs.Solution.CreateEmptySolution();
+            ProjectTestExtension projExt = vs.Solution.AddProject(ProjectLanguage.CSharp,
+                                                                 ProjectTemplate.ClassLibrary, ProjectTargetFramework.V46, "TestProject");
+
             EnvDTE.Project project = VisualStudio.Dte.Solution.Projects.Item(1);
 
             // Act
@@ -45,7 +52,7 @@ namespace NuGet.Tests.Apex
             CommonUtility.AssertPackageInPackagesConfig(VisualStudio, projExt, "newtonsoft.json", XunitLogger);
         }
 
-        [StaFact(Skip = "https://github.com/NuGet/Home/issues/11308")]
+        [StaFact]
         public void SimpleUninstallFromIVsInstaller()
         {
             // Arrange
@@ -133,7 +140,7 @@ namespace NuGet.Tests.Apex
             File.Exists(uniqueContentFile).Should().BeTrue($"'{uniqueContentFile}' should exist");
         }
 
-        [StaFact(Skip = "https://github.com/NuGet/Home/issues/11308")]
+        [StaFact]  
         public async Task SimpleInstallFromIVsInstaller_PackageSourceMapping_WithMultipleFeedsWithIdenticalPackages_InstallsCorrectPackage()
         {
             // Arrange

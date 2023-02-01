@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting;
 using FluentAssertions;
+using Microsoft.Test.Apex;
+using Microsoft.Test.Apex.Hosts.Services;
 using Microsoft.Test.Apex.VisualStudio;
 using NuGet.VisualStudio;
 
@@ -71,10 +74,15 @@ namespace NuGet.Tests.Apex
                     lines.AddRange(outputPane.Text.Split('\n').Select(e => e.Trim()).Where(e => !string.IsNullOrEmpty(e)));
                 });
             }
-            catch (ArgumentException)
+            catch
             {
                 // If no output has been printed into the nuget output window then the output pane will not be initialized
                 // If no output has been printed we know there is no error in the output window.
+
+                if (host != null)
+                {
+                    host.CaptureHostProcessDumpIfRunning(MiniDumpType.WithFullMemory);
+                }
             }
 
             return lines;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -89,6 +89,7 @@ namespace NuGet
             {
                 if (visualStudio != null && visualStudio.IsRunning)
                 {
+                    visualStudio.Configuration.CrashDumpDirectory = new DirectoryInfo(@"C:\Users\mruizmares\Documents");
                     visualStudio.CaptureHostProcessDumpIfRunning(MiniDumpType.WithFullMemory);
                     visualStudio.HostProcess.Kill();
                 }
