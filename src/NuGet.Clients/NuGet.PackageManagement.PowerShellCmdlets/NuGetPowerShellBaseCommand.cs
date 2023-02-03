@@ -74,7 +74,6 @@ namespace NuGet.PackageManagement.PowerShellCmdlets
         {
             var componentModel = NuGetUIThreadHelper.JoinableTaskFactory.Run(ServiceLocator.GetComponentModelAsync);
             _sourceRepositoryProvider = componentModel.GetService<ISourceRepositoryProvider>();
-            ConfigSettings = componentModel.GetService<ISettings>();
             VsSolutionManager = componentModel.GetService<IVsSolutionManager>();
             SourceControlManagerProvider = componentModel.GetService<ISourceControlManagerProvider>();
             _commonOperations = componentModel.GetService<ICommonOperations>();
