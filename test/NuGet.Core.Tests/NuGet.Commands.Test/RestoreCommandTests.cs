@@ -3154,11 +3154,6 @@ namespace NuGet.Commands.Test
             }
         }
 
-        private static PackageSpec GetPackageSpec(string projectName, string testDirectory, string referenceSpec)
-        {
-            return JsonPackageSpecReader.GetPackageSpec(referenceSpec, projectName, testDirectory).WithTestRestoreMetadata();
-        }
-
         private static TargetFrameworkInformation CreateTargetFrameworkInformation(List<LibraryDependency> dependencies, List<CentralPackageVersion> centralVersionsDependencies, NuGetFramework framework = null)
         {
             NuGetFramework nugetFramework = framework ?? new NuGetFramework("net40");
@@ -3179,6 +3174,7 @@ namespace NuGet.Commands.Test
             return tfi;
         }
 
+        // replace this?
         private static PackageSpec CreatePackageSpec(List<TargetFrameworkInformation> tfis, NuGetFramework framework, string projectName, string projectPath, bool centralPackageManagementEnabled, bool centralPackageTransitivePinningEnabled = false)
         {
             var packageSpec = new PackageSpec(tfis);
