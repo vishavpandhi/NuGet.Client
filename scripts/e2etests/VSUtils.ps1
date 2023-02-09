@@ -111,7 +111,8 @@ function LaunchVSAndWaitForDTE {
 
         $dte2 = GetDTE2 -dteName $dteName
         if ($dte2) {
-            Write-Host 'Obtained DTE.'
+            Write-Host 'Obtained DTE. Wait for 5 seconds...'
+            start-sleep 5
             return $dte2
         }
 
