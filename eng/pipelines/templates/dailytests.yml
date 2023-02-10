@@ -89,7 +89,7 @@ stages:
 # Dartlab's template defines this in its own stage
 - template: Apex_Tests_On_Windows.yml
   parameters:
-    condition: "and(succeeded())"
+    condition: "succeeded()"
     dependsOn:
       - Initialize
       - Build_Insertable
