@@ -133,7 +133,7 @@ stages:
       - name: GitHubStatusName
         value: Daily VS Tests On Windows
     isOfficialBuild: ${{parameters.isOfficialBuild}}
-    runSettingsURI: https://vsdrop.corp.microsoft.com/file/v1/RunSettings/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId);NuGet.Tests.Apex.runsettings
+    runSettingsURI: https://vsdrop.corp.microsoft.com/file/v1/RunSettings/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId);NuGet.Tests.EndToEnd.runsettings
     dartLabEnvironment: ${{parameters.DartLabEnvironment}}
     testExecutionJobTimeoutInMinutes: 150
     bootstrapperUrl: $(VsBootstrapperUrl)

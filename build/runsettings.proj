@@ -19,5 +19,11 @@
             Projects="template.runsettingsproj"
             Properties="RunName=NuGet.Tests.Apex;
             FileName=NuGet.Tests.Apex.dll;" />
+
+        <!-- NuGet.Tests.EndToEnd.runsettings -->
+        <MSBuild
+            Projects="template.runsettingsproj"
+            Properties="RunName=NuGet.Tests.EndToEnd;
+            FileName=NuGet.Tests.EndToEnd.dll;" />
     </Target>
 </Project>
