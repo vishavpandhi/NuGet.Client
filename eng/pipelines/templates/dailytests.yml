@@ -63,19 +63,6 @@ stages:
     steps:
     - template: Initialize_Build.yml
 
-  displayName: Static Source Analysis
-  dependsOn: []
-  jobs:
-  - job: RunStaticSourceAnalysis
-    displayName: Run Static Source Analysis
-    timeoutInMinutes: 15
-    pool:
-      vmImage: windows-latest
-    steps:
-    - template: Static_Source_Analysis.yml
-      parameters:
-        isOfficialBuild: ${{ parameters.isOfficialBuild }}
-
 - stage: Build_Insertable
   displayName: Build NuGet inserted into VS and .NET SDK
   dependsOn: Initialize
@@ -98,27 +85,6 @@ stages:
       parameters:
         BuildRTM: false
         NuGetLocalizationType: ${{ parameters.NuGetLocalizationType }}
-
-  displayName: Build NuGet published to nuget.org
-  dependsOn: Initialize
-  jobs:
-  - job: Build_and_UnitTest_RTM
-    timeoutInMinutes: 170
-    variables:
-      BuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.BuildNumber']]
-      FullVstsBuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
-      VsTargetChannel: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannel']]
-      VsTargetChannelForTests: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannelForTests']]
-      VsTargetMajorVersion: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetMajorVersion']]
-      SDKVersionForBuild: $[stageDependencies.Initialize.Initialize_Build.outputs['getSDKVersionForBuild.SDKVersionForBuild']]
-      BuildRTM: "true"
-    pool:
-      name: VSEngSS-MicroBuild2022-1ES
-    steps:
-    - template: Build_and_UnitTest.yml
-      parameters:
-        BuildRTM: true
-        NuGetLocalizationType: Full
 
 # Dartlab's template defines this in its own stage
 - template: Apex_Tests_On_Windows.yml
