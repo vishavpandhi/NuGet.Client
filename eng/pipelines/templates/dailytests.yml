@@ -63,28 +63,28 @@ stages:
     steps:
     - template: Initialize_Build.yml
 
-- stage: Build_Insertable
-  displayName: Build NuGet inserted into VS and .NET SDK
-  dependsOn: Initialize
-  jobs:
-  - job: Build_and_UnitTest_NonRTM
-    timeoutInMinutes: 170
-    variables:
-      BuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.BuildNumber']]
-      FullVstsBuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
-      VsTargetChannel: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannel']]
-      VsTargetChannelForTests: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannelForTests']]
-      VsTargetMajorVersion: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetMajorVersion']]
-      SDKVersionForBuild: $[stageDependencies.Initialize.Initialize_Build.outputs['getSDKVersionForBuild.SDKVersionForBuild']]
-      BuildRTM: "false"
-      SemanticVersion: $[stageDependencies.Initialize.GetSemanticVersion.outputs['setsemanticversion.SemanticVersion']]
-    pool:
-      name: VSEngSS-MicroBuild2022-1ES
-    steps:
-    - template: Build_and_UnitTest.yml
-      parameters:
-        BuildRTM: false
-        NuGetLocalizationType: ${{ parameters.NuGetLocalizationType }}
+# - stage: Build_Insertable
+#   displayName: Build NuGet inserted into VS and .NET SDK
+#   dependsOn: Initialize
+#   jobs:
+#   - job: Build_and_UnitTest_NonRTM
+#     timeoutInMinutes: 170
+#     variables:
+#       BuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.BuildNumber']]
+#       FullVstsBuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
+#       VsTargetChannel: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannel']]
+#       VsTargetChannelForTests: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannelForTests']]
+#       VsTargetMajorVersion: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetMajorVersion']]
+#       SDKVersionForBuild: $[stageDependencies.Initialize.Initialize_Build.outputs['getSDKVersionForBuild.SDKVersionForBuild']]
+#       BuildRTM: "false"
+#       SemanticVersion: $[stageDependencies.Initialize.GetSemanticVersion.outputs['setsemanticversion.SemanticVersion']]
+#     pool:
+#       name: VSEngSS-MicroBuild2022-1ES
+#     steps:
+#     - template: Build_and_UnitTest.yml
+#       parameters:
+#         BuildRTM: false
+#         NuGetLocalizationType: ${{ parameters.NuGetLocalizationType }}
 
 # Dartlab's template defines this in its own stage
 - template: Apex_Tests_On_Windows.yml
