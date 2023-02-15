@@ -6,6 +6,7 @@ $Nupkgs = Join-Path $Artifacts nupkgs
 $ConfigureJson = Join-Path $Artifacts configure.json
 $BuiltInVsWhereExe = "${Env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 $VSVersion = $env:VisualStudioVersion
+$OverrideCliVersion = $env:OverrideCliBranchListForTesting
 $DotNetExe = Join-Path $CLIRoot 'dotnet.exe'
 $ILMerge = Join-Path $NuGetClientRoot 'packages\ilmerge\2.14.1208\tools\ILMerge.exe'
 
@@ -160,6 +161,11 @@ Function Install-DotnetCLI {
 
     $CmdOutLines = ((& $msbuildExe $NuGetClientRoot\build\config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetCliBranchForTesting) | Out-String).Trim()
     $CliBranchListForTesting = ($CmdOutLines -split [Environment]::NewLine)[-1]
+    
+    if ($OverrideCliVersion){
+        $CliBranchListForTesting = $OverrideCliVersion;
+    }
+
     $CliBranchList = $CliBranchListForTesting -split ';'
 
     $DotNetInstall = Join-Path $CLIRoot 'dotnet-install.ps1'
