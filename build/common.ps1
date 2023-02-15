@@ -159,7 +159,8 @@ Function Install-DotnetCLI {
     $MSBuildExe = Get-MSBuildExe
 
     $CmdOutLines = ((& $msbuildExe $NuGetClientRoot\build\config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetCliBranchForTesting) | Out-String).Trim()
-    $CliBranchListForTesting = ($CmdOutLines -split [Environment]::NewLine)[-1]
+    $CliBranchListForTesting = '7.0:7.0.102' #($CmdOutLines -split [Environment]::NewLine)[-1]
+
     $CliBranchList = $CliBranchListForTesting -split ';'
 
     $DotNetInstall = Join-Path $CLIRoot 'dotnet-install.ps1'
