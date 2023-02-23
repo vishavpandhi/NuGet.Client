@@ -87,7 +87,6 @@ stages:
       parameters:
         BuildRTM: $(BuildRTM)
         CreateVsix: false
-        DisableApexTests: true
         NuGetLocalizationType: Full
 
 - stage: CLI_Func_Tests
