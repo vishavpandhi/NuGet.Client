@@ -45,6 +45,8 @@
     Refer to https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script#options for more details.
     -->
     <CliBranchForTesting Condition="'$(CliBranchForTesting)' == ''">7.0</CliBranchForTesting>
+    <!-- Specifies the next major version of the .NET SDK test. -->
+    <vNextCliBranchForTesting Condition="'$(vNextCliBranchForTesting)' == ''">8.0</vNextCliBranchForTesting>
   </PropertyGroup>
 
   <!-- Config -->
@@ -92,5 +94,8 @@
   </Target>
   <Target Name="GetCliBranchForTesting">
       <Message Text="$(CliBranchForTesting)" Importance="High"/>
+  </Target>
+  <Target Name="GetvNextCliBranchForTesting">
+      <Message Text="$(vNextCliBranchForTesting)" Importance="High"/>
   </Target>
 </Project>

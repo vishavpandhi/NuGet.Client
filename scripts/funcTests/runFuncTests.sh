@@ -7,6 +7,7 @@ env | sort
 while true ; do
     case "$1" in
         -c|--clear-cache) CLEAR_CACHE=1 ; shift ;;
+        -n|--use-vnext-dotnet-sdk) USE_VNEXT_DOTNET_SDK=1 ; shift ;;
         --) shift ; break ;;
         *) shift ; break ;;
     esac
@@ -43,11 +44,18 @@ DOTNET="$(pwd)/cli/dotnet"
 # Let the dotnet cli expand and decompress first if it's a first-run
 $DOTNET --info
 
+if [ "$USE_VNEXT_DOTNET_SDK" == "1" ]
+then
+    Target="GetvNextCliBranchForTesting"
+else
+    Target="GetCliBranchForTesting"
+fi
+
 # Get CLI Branches for testing
-echo "dotnet msbuild build/config.props /restore:false /ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign /nologo /target:GetCliBranchForTesting"
+echo "dotnet msbuild build/config.props /restore:false /ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign /nologo /target:$Target"
 
 IFS=$'\n'
-CMD_OUT_LINES=(`dotnet msbuild build/config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetCliBranchForTesting`)
+CMD_OUT_LINES=(`dotnet msbuild build/config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:$Target`)
 # Take only last the line which has the version information and strip all the spaces
 CMD_LAST_LINE=${CMD_OUT_LINES[@]:(-1)}
 DOTNET_BRANCHES=${CMD_LAST_LINE//[[:space:]]}
@@ -71,7 +79,7 @@ do
 
 	echo "cli/dotnet-install.sh --install-dir cli --channel $Channel --version $Version -nopath"
 	cli/dotnet-install.sh --install-dir cli --channel $Channel --version $Version -nopath
- 
+
 	if (( $? )); then
 		echo "The .NET CLI Install for $DOTNET_BRANCH failed!!"
 		exit 1

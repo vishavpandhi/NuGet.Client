@@ -1,0 +1,163 @@
+pr: none
+trigger: none
+
+#schedules:
+#- cron: "0 4 * * 1-5" # Every weekday at 4 AM UTC
+#  displayName: "Weekday .NET SDK vNext test pass"
+#  always: true
+#  branches:
+#    include:
+#    - dev
+
+parameters:
+- name: BuildRTM
+  type: boolean
+  default: false
+- name: DartLabEnvironment
+  displayName: DartLab Environment
+  type: string
+  default: Production
+  values:
+  - Production
+  - Staging
+- name: isOfficialBuild
+  type: boolean
+  default: false
+
+resources:
+  pipelines:
+  - pipeline: DartLab
+    source: DartLab
+    branch: main
+  repositories:
+  - repository: DartLabTemplates
+    type: git
+    name: DartLab.Templates
+    ref: refs/heads/main
+
+variables:
+  BuildRTM: ${{ parameters.BuildRTM }}
+  DOTNET_NOLOGO: 1
+  DotNetSdkVersion: 8.x
+  IsOfficialBuild: ${{ parameters.isOfficialBuild }}
+  ManualGitHubChecks: false
+  SigningType: test
+
+stages:
+- stage: Initialize
+  jobs:
+  - job: GetSemanticVersion
+    displayName: Get NuGet.Client semantic version
+    timeoutInMinutes: 10
+    pool:
+      vmImage: windows-latest
+    steps:
+    - template: Initialize_Build_SemanticVersion.yml
+
+  - job: Initialize_Build
+    dependsOn: GetSemanticVersion
+    timeoutInMinutes: 10
+    variables:
+      SemanticVersion: $[dependencies.GetSemanticVersion.outputs['setsemanticversion.SemanticVersion']]
+      BuildRevision: $[counter(format('{0}.{1}', variables['SemanticVersion'], variables['build.definitionname']), 1)]
+    pool:
+      vmImage: windows-latest
+    steps:
+    - template: Initialize_Build.yml
+      parameters:
+        UpdateGitHubCommitStatus: false
+
+- stage: Build
+  displayName: Build NuGet inserted into VS
+  dependsOn: Initialize
+  jobs:
+  - job: Build_and_UnitTest_NonRTM
+    timeoutInMinutes: 170
+    variables:
+      BuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.BuildNumber']]
+      FullVstsBuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
+      VsTargetChannel: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannel']]
+      VsTargetChannelForTests: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannelForTests']]
+      VsTargetMajorVersion: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetMajorVersion']]
+      SemanticVersion: $[stageDependencies.Initialize.GetSemanticVersion.outputs['setsemanticversion.SemanticVersion']]
+    pool:
+      name: VSEngSS-MicroBuild2022-1ES
+    steps:
+    - template: Build_and_UnitTest.yml
+      parameters:
+        BuildRTM: $(BuildRTM)
+        CreateVsix: false
+        DisableApexTests: true
+        NuGetLocalizationType: Full
+
+- stage: CLI_Func_Tests
+  dependsOn: Initialize
+  jobs:
+  - job: Functional_Tests_On_Windows
+    timeoutInMinutes: 120
+    variables:
+      BuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.BuildNumber']]
+      FullVstsBuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
+       # Set MSBuildEnableWorkloadResolver to work around https://github.com/dotnet/sdk/issues/17461
+      MSBuildEnableWorkloadResolver: false
+    condition: "and(succeeded(),eq(variables['RunFunctionalTestsOnWindows'], 'true')) "
+    pool:
+      name: VSEngSS-MicroBuild2022-1ES
+    strategy:
+      matrix:
+        IsDesktop:
+          SkipCoreAssemblies: "true"
+        IsCore:
+          SkipDesktopAssemblies: "true"
+    steps:
+    - template: Functional_Tests_On_Windows.yml
+
+  - job: Tests_On_Linux
+    timeoutInMinutes: 45
+    variables:
+      FULLVSTSBUILDNUMBER: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
+      MSBUILDDISABLENODEREUSE: 1
+      # Set MSBuildEnableWorkloadResolver to work around https://github.com/dotnet/sdk/issues/17461
+      MSBuildEnableWorkloadResolver: false
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: true
+      USE_VNEXT_DOTNET_SDK: 1
+    condition: "and(succeeded(), eq(variables['RunTestsOnLinux'], 'true'))"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - template: Tests_On_Linux.yml
+      parameters:
+        DotNetSdkVersion: $(DotNetSdkVersion)
+
+  - job: CrossFramework_Tests_On_Windows
+    timeoutInMinutes: 30
+    variables:
+      BuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.BuildNumber']]
+      FullVstsBuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
+    condition: "and(succeeded(),eq(variables['RunCrossFrameworkTestsOnWindows'], 'true')) "
+    pool:
+      vmImage: windows-latest
+    steps:
+    - template: CrossFramework_Tests_On_Windows.yml
+      parameters:
+        DotNetSdkVersion: $(DotNetSdkVersion)
+
+- stage: MacTests
+  dependsOn:
+  - Initialize
+  - Build
+  condition: "and(succeeded(), eq(variables['RunTestsOnMac'], 'true'))"
+  jobs:
+  - job: Tests_On_Mac
+    timeoutInMinutes: 90
+    variables:
+      FULLVSTSBUILDNUMBER: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
+      # Set MSBuildEnableWorkloadResolver to work around https://github.com/dotnet/sdk/issues/17461
+      MSBuildEnableWorkloadResolver: false
+      USE_VNEXT_DOTNET_SDK: 1
+    pool:
+      vmImage: macos-latest
+    steps:
+    - template: Tests_On_Mac.yml
+      parameters:
+        DotNetSdkVersion: $(DotNetSdkVersion)

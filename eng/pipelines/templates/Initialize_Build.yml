@@ -1,3 +1,8 @@
+parameters:
+- name: UpdateGitHubCommitStatus
+  type: boolean
+  default: true
+
 steps:
 - task: PowerShell@1
   displayName: "Check VSTS Personal Access Token"
@@ -7,14 +12,15 @@ steps:
       . $(Build.Repository.LocalPath)\\scripts\\utils\\PostGitCommitStatus.ps1
       CheckVstsPersonalAccessToken -VstsPersonalAccessToken $(System.AccessToken)
 
-- task: PowerShell@1
-  displayName: "Initialize Git Commit Status on GitHub"
-  inputs:
-    scriptType: "inlineScript"
-    inlineScript: |
-      . $(Build.Repository.LocalPath)\\scripts\\utils\\PostGitCommitStatus.ps1
-      InitializeAllTestsToPending -PersonalAccessToken $(NuGetLurkerPersonalAccessToken) -CommitSha $(Build.SourceVersion)
-  condition: "not(eq(variables['ManualGitHubChecks'], 'false'))"
+- ${{ if parameters.UpdateGitHubCommitStatus }}:
+  - task: PowerShell@1
+    displayName: "Initialize Git Commit Status on GitHub"
+    inputs:
+      scriptType: "inlineScript"
+      inlineScript: |
+        . $(Build.Repository.LocalPath)\\scripts\\utils\\PostGitCommitStatus.ps1
+        InitializeAllTestsToPending -PersonalAccessToken $(NuGetLurkerPersonalAccessToken) -CommitSha $(Build.SourceVersion)
+    condition: "not(eq(variables['ManualGitHubChecks'], 'false'))"
 
 - task: PowerShell@1
   displayName: "Update Build Number"

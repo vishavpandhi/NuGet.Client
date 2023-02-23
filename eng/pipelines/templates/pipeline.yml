@@ -52,6 +52,7 @@ resources:
 
 variables:
   DOTNET_NOLOGO: 1
+  DotNetSdkVersion: 7.x
   Codeql.Enabled: ${{ parameters.isOfficialBuild }}
   Codeql.TSAEnabled: ${{ parameters.isOfficialBuild }}
 
@@ -195,6 +196,8 @@ stages:
       vmImage: ubuntu-latest
     steps:
     - template: Tests_On_Linux.yml
+      parameters:
+        DotNetSdkVersion: $(DotNetSdkVersion)
 
   - job: CrossFramework_Tests_On_Windows
     timeoutInMinutes: 30
@@ -206,6 +209,8 @@ stages:
       vmImage: windows-latest
     steps:
     - template: CrossFramework_Tests_On_Windows.yml
+      parameters:
+        DotNetSdkVersion: $(DotNetSdkVersion)
 
 - stage: MacTests
   dependsOn:
@@ -223,6 +228,8 @@ stages:
       vmImage: macos-latest
     steps:
     - template: Tests_On_Mac.yml
+      parameters:
+        DotNetSdkVersion: $(DotNetSdkVersion)
 
 # Dartlab's template defines this in its own stage
 - template: End_To_End_Tests_On_Windows.yml

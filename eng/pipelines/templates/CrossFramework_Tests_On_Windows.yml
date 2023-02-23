@@ -1,9 +1,13 @@
+parameters:
+- name: DotNetSdkVersion
+  type: string
+
 steps:
 - task: UseDotNet@2
-  displayName: 'Use .NET Core sdk'
+  displayName: 'Use .NET SDK'
   inputs:
     packageType: sdk
-    version: 7.x
+    version: ${{ parameters.DotNetSdkVersion }}
     installationPath: $(Agent.TempDirectory)/dotnet
 
 - task: PowerShell@2

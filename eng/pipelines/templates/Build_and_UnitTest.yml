@@ -1,6 +1,9 @@
 parameters:
 - name: BuildRTM
   type: boolean
+- name: CreateVsix
+  type: boolean
+  default: true
 - name: NuGetLocalizationType
   type: string
 
@@ -100,10 +103,11 @@ steps:
     configuration: "$(BuildConfiguration)"
     msbuildArguments: "/restore:false /target:RestoreVS /property:BuildNumber=$(BuildNumber) /property:BuildRTM=$(BuildRTM) /property:IncludeApex=true /binarylogger:$(Build.StagingDirectory)\\binlog\\01.Restore.binlog"
 
-- task: PowerShell@1
-  displayName: "Set IncludeApex variable"
-  name: "includeapex"
-  inputs:
+- ${{ if parameters.CreateVsix }}:
+  - task: PowerShell@1
+    displayName: "Set IncludeApex variable"
+    name: "includeapex"
+    inputs:
     scriptType: "inlineScript"
     inlineScript: |
       try {
@@ -125,7 +129,7 @@ steps:
 - task: CodeQL3000Finalize@0
   displayName: Finalize CodeQL
   condition: "and(succeeded(), eq(variables['BuildRTM'], 'true'), eq(variables['Codeql.Enabled'], 'true'))"
-  
+
 - task: MSBuild@1
   displayName: "Localize Assemblies"
   inputs:
@@ -222,13 +226,14 @@ steps:
     configuration: "$(BuildConfiguration)"
     msbuildArguments: "/restore:false /target:EnsurePackagesExist /property:ExcludeTestProjects=$(BuildRTM) /binarylogger:$(Build.StagingDirectory)\\binlog\\10.EnsurePackagesExist.binlog"
 
-- task: MSBuild@1
-  displayName: "Pack VSIX"
-  inputs:
-    solution: "build\\build.proj"
-    configuration: "$(BuildConfiguration)"
-    msbuildArguments: "/restore:false /target:BuildVSIX /property:BuildRTM=$(BuildRTM) /property:ExcludeTestProjects=$(BuildRTM) /property:IsCIBuild=true /binarylogger:$(Build.StagingDirectory)\\binlog\\11.BuildVSIX.binlog"
-  condition: "and(succeeded(),eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: MSBuild@1
+    displayName: "Pack VSIX"
+    inputs:
+      solution: "build\\build.proj"
+      configuration: "$(BuildConfiguration)"
+      msbuildArguments: "/restore:false /target:BuildVSIX /property:BuildRTM=$(BuildRTM) /property:ExcludeTestProjects=$(BuildRTM) /property:IsCIBuild=true /binarylogger:$(Build.StagingDirectory)\\binlog\\11.BuildVSIX.binlog"
+    condition: "and(succeeded(),eq(variables['BuildRTM'], 'false'))"
 
 - ${{ if not(parameters.BuildRTM)}}:
   - template: \eng\common\templates\steps\generate-sbom.yml
@@ -236,13 +241,14 @@ steps:
       PackageName: 'NuGet.Client'
       PackageVersion: "$(SemanticVersion)"
 
-- task: MSBuild@1
-  displayName: "Generate Build Tools package"
-  inputs:
-    solution: "setup/Microsoft.VisualStudio.NuGet.BuildTools.vsmanproj"
-    configuration: "$(BuildConfiguration)"
-    msbuildArguments: "/restore:false /property:BuildNumber=$(BuildNumber) /property:IsVsixBuild=true /binarylogger:$(Build.StagingDirectory)\\binlog\\12.BuildToolsVSIX.binlog"
-  condition: " and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: MSBuild@1
+    displayName: "Generate Build Tools package"
+    inputs:
+      solution: "setup/Microsoft.VisualStudio.NuGet.BuildTools.vsmanproj"
+      configuration: "$(BuildConfiguration)"
+      msbuildArguments: "/restore:false /property:BuildNumber=$(BuildNumber) /property:IsVsixBuild=true /binarylogger:$(Build.StagingDirectory)\\binlog\\12.BuildToolsVSIX.binlog"
+    condition: " and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
 - task: MSBuild@1
   displayName: "Sign Nupkgs and VSIX"
@@ -284,122 +290,134 @@ steps:
     artifactName: "nupkgs - $(RtmLabel)"
   condition: and(succeeded(), or(eq(variables['IsOfficialBuild'], 'true'), eq(variables['BuildRTM'], 'true')))  #skip this task for nonRTM in private build
 
-- task: MSBuild@1
-  displayName: "Generate VSMAN file for NuGet Core VSIX"
-  inputs:
-    solution: "setup\\Microsoft.VisualStudio.NuGet.Core.vsmanproj"
-    configuration: "$(BuildConfiguration)"
-    msbuildArguments: "/restore:false /property:ManifestDirPath=$(Build.ArtifactStagingDirectory)/sbom /binarylogger:$(Build.StagingDirectory)\\binlog\\14.GenerateVSManifestForVSIX.binlog"
-  condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
+- ${{ if parameters.CreateVsix }}:
+  - task: MSBuild@1
+    displayName: "Generate VSMAN file for NuGet Core VSIX"
+    inputs:
+      solution: "setup\\Microsoft.VisualStudio.NuGet.Core.vsmanproj"
+      configuration: "$(BuildConfiguration)"
+      msbuildArguments: "/restore:false /property:ManifestDirPath=$(Build.ArtifactStagingDirectory)/sbom /binarylogger:$(Build.StagingDirectory)\\binlog\\14.GenerateVSManifestForVSIX.binlog"
+    condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
 
-- task: MSBuild@1
-  displayName: "Generate VSMAN file for Build Tools VSIX"
-  inputs:
-    solution: "setup\\Microsoft.VisualStudio.NuGet.BuildTools.vsmanproj"
-    configuration: "$(BuildConfiguration)"
-    msbuildArguments: "/restore:false /property:IsVsixBuild=false /property:ManifestDirPath=$(Build.ArtifactStagingDirectory)/sbom /binarylogger:$(Build.StagingDirectory)\\binlog\\15.GenerateVSManifestForToolsVSIX.binlog"
-  condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
+- ${{ if parameters.CreateVsix }}:
+  - task: MSBuild@1
+    displayName: "Generate VSMAN file for Build Tools VSIX"
+    inputs:
+      solution: "setup\\Microsoft.VisualStudio.NuGet.BuildTools.vsmanproj"
+      configuration: "$(BuildConfiguration)"
+      msbuildArguments: "/restore:false /property:IsVsixBuild=false /property:ManifestDirPath=$(Build.ArtifactStagingDirectory)/sbom /binarylogger:$(Build.StagingDirectory)\\binlog\\15.GenerateVSManifestForToolsVSIX.binlog"
+    condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
 
-- task: PowerShell@1
-  displayName: "Create EndToEnd Test Package"
-  inputs:
-    scriptName: "$(Build.Repository.LocalPath)\\scripts\\cibuild\\CreateEndToEndTestPackage.ps1"
-    arguments: "-c $(BuildConfiguration) -out $(Build.Repository.LocalPath)\\artifacts\\VS15"
-    failOnStandardError: "true"
-  condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
+- ${{ if parameters.CreateVsix }}:
+  - task: PowerShell@1
+    displayName: "Create EndToEnd Test Package"
+    inputs:
+      scriptName: "$(Build.Repository.LocalPath)\\scripts\\cibuild\\CreateEndToEndTestPackage.ps1"
+      arguments: "-c $(BuildConfiguration) -out $(Build.Repository.LocalPath)\\artifacts\\VS15"
+      failOnStandardError: "true"
+    condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
 
-- task: NuGetCommand@2
-  displayName: 'Add the VSEng package source'
-  inputs:
-    command: 'custom'
-    arguments: 'sources add -Name VS -Source $(VsPackageFeedUrl) -UserName $(VsPackageFeedUsername) -Password $(VsPackageFeedPassword) -ConfigFile $(System.DefaultWorkingDirectory)\NuGet.config'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: NuGetCommand@2
+    displayName: 'Add the VSEng package source'
+    inputs:
+      command: 'custom'
+      arguments: 'sources add -Name VS -Source $(VsPackageFeedUrl) -UserName $(VsPackageFeedUsername) -Password $(VsPackageFeedPassword) -ConfigFile $(System.DefaultWorkingDirectory)\NuGet.config'
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: NuGetCommand@2
-  displayName: 'Install the NuGet package for building .runsettingsproj files'
-  inputs:
-    command: 'custom'
-    arguments: 'install Microsoft.DevDiv.Validation.TestPlatform.Settings.Tasks -Version 1.0.655 -Source $(VsPackageFeedUrl) -ConfigFile $(System.DefaultWorkingDirectory)\NuGet.config -OutputDirectory $(System.DefaultWorkingDirectory)\packages'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: NuGetCommand@2
+    displayName: 'Install the NuGet package for building .runsettingsproj files'
+    inputs:
+      command: 'custom'
+      arguments: 'install Microsoft.DevDiv.Validation.TestPlatform.Settings.Tasks -Version 1.0.655 -Source $(VsPackageFeedUrl) -ConfigFile $(System.DefaultWorkingDirectory)\NuGet.config -OutputDirectory $(System.DefaultWorkingDirectory)\packages'
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: MicroBuildBuildVSBootstrapper@2
-  displayName: 'Build a Visual Studio bootstrapper for tests'
-  inputs:
-    channelName: "$(VsTargetChannelForTests)"
-    vsMajorVersion: "$(VsTargetMajorVersion)"
-    manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
-    outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: MicroBuildBuildVSBootstrapper@2
+    displayName: 'Build a Visual Studio bootstrapper for tests'
+    inputs:
+      channelName: "$(VsTargetChannelForTests)"
+      vsMajorVersion: "$(VsTargetMajorVersion)"
+      manifests: '$(Build.Repository.LocalPath)\artifacts\VS15\Microsoft.VisualStudio.NuGet.Core.vsman'
+      outputFolder: '$(Build.Repository.LocalPath)\artifacts\VS15'
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish BootstrapperInfo.json as a build artifact'
-  inputs:
-    PathtoPublish: $(Build.StagingDirectory)\MicroBuild\Output
-    ArtifactName: MicroBuildOutputs
-    ArtifactType: Container
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish BootstrapperInfo.json as a build artifact'
+    inputs:
+      PathtoPublish: $(Build.StagingDirectory)\MicroBuild\Output
+      ArtifactName: MicroBuildOutputs
+      ArtifactType: Container
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: PowerShell@1
-  displayName: "Set Bootstrapper URL variable for tests"
-  name: "vsbootstrapper"
-  inputs:
-    scriptType: "inlineScript"
-    inlineScript: |
-      try {
-        $json = Get-Content "${env:Build_StagingDirectory}\MicroBuild\Output\Bootstrapperinfo.json" | ConvertFrom-Json
-        $bootstrapperUrl = $json[0].bootstrapperUrl;
-        Write-Host "Bootstrapper URL: $bootstrapperUrl"
-        Write-Host "##vso[task.setvariable variable=bootstrapperUrl;isOutput=true]$bootstrapperUrl"
-      } catch {
-        Write-Host "##vso[task.LogIssue type=error;]Unable to set bootstrapperUrl: $_"
-        exit 1
-      }
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: PowerShell@1
+    displayName: "Set Bootstrapper URL variable for tests"
+    name: "vsbootstrapper"
+    inputs:
+      scriptType: "inlineScript"
+      inlineScript: |
+        try {
+          $json = Get-Content "${env:Build_StagingDirectory}\MicroBuild\Output\Bootstrapperinfo.json" | ConvertFrom-Json
+          $bootstrapperUrl = $json[0].bootstrapperUrl;
+          Write-Host "Bootstrapper URL: $bootstrapperUrl"
+          Write-Host "##vso[task.setvariable variable=bootstrapperUrl;isOutput=true]$bootstrapperUrl"
+        } catch {
+          Write-Host "##vso[task.LogIssue type=error;]Unable to set bootstrapperUrl: $_"
+          exit 1
+        }
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: MSBuild@1
-  displayName: 'Generate .runsettings files'
-  inputs:
-    solution: 'build\runsettings.proj'
-    msbuildArguments: '/restore:false /property:OutputPath="$(Build.Repository.LocalPath)\artifacts\RunSettings" /property:TestDrop="RunSettings/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)" /property:ProfilingInputsDrop="ProfilingInputs/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)" /binarylogger:$(Build.StagingDirectory)\\binlog\\16.GenerateRunSettings.binlog'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: MSBuild@1
+    displayName: 'Generate .runsettings files'
+    inputs:
+      solution: 'build\runsettings.proj'
+      msbuildArguments: '/restore:false /property:OutputPath="$(Build.Repository.LocalPath)\artifacts\RunSettings" /property:TestDrop="RunSettings/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)" /property:ProfilingInputsDrop="ProfilingInputs/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)" /binarylogger:$(Build.StagingDirectory)\\binlog\\16.GenerateRunSettings.binlog'
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: PowerShell@1
-  displayName: 'Copy VS integration test binaries'
-  inputs:
-    scriptType: "inlineScript"
-    inlineScript: |
-      try {
-        Write-Output "Copying NuGet.OptProf binaries"
-        Copy-Item test\NuGet.Tests.Apex\NuGet.OptProf\bin\$(BuildConfiguration) artifacts\RunSettings\NuGet.OptProf\ -Recurse -ErrorAction Stop
-        Write-Output "Copying NuGet.Tests.Apex binaries"
-        Copy-Item test\NuGet.Tests.Apex\NuGet.Tests.Apex\bin\$(BuildConfiguration) artifacts\RunSettings\NuGet.Tests.Apex\ -Recurse -ErrorAction Stop
-      } catch {
-        Write-Host "##vso[task.LogIssue type=error;]$_"
-        exit 1
-      }
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: PowerShell@1
+    displayName: 'Copy VS integration test binaries'
+    inputs:
+      scriptType: "inlineScript"
+      inlineScript: |
+        try {
+          Write-Output "Copying NuGet.OptProf binaries"
+          Copy-Item test\NuGet.Tests.Apex\NuGet.OptProf\bin\$(BuildConfiguration) artifacts\RunSettings\NuGet.OptProf\ -Recurse -ErrorAction Stop
+          Write-Output "Copying NuGet.Tests.Apex binaries"
+          Copy-Item test\NuGet.Tests.Apex\NuGet.Tests.Apex\bin\$(BuildConfiguration) artifacts\RunSettings\NuGet.Tests.Apex\ -Recurse -ErrorAction Stop
+        } catch {
+          Write-Host "##vso[task.LogIssue type=error;]$_"
+          exit 1
+        }
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: artifactDropTask@0
-  displayName: 'Publish the .runsettings files to artifact services'
-  inputs:
-    dropServiceURI: 'https://devdiv.artifacts.visualstudio.com'
-    buildNumber: 'RunSettings/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)'
-    sourcePath: 'artifacts\RunSettings'
-    toLowerCase: false
-    usePat: true
-    dropMetadataContainerName: 'DropMetadata-RunSettings'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: artifactDropTask@0
+    displayName: 'Publish the .runsettings files to artifact services'
+    inputs:
+      dropServiceURI: 'https://devdiv.artifacts.visualstudio.com'
+      buildNumber: 'RunSettings/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)'
+      sourcePath: 'artifacts\RunSettings'
+      toLowerCase: false
+      usePat: true
+      dropMetadataContainerName: 'DropMetadata-RunSettings'
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
-- task: artifactDropTask@0
-  displayName: 'OptProfV2:  publish profiling inputs to artifact services'
-  inputs:
-    dropServiceURI: 'https://devdiv.artifacts.visualstudio.com'
-    buildNumber: 'ProfilingInputs/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)'
-    sourcePath: '$(Build.ArtifactStagingDirectory)\OptProf\ProfilingInputs'
-    toLowerCase: false
-    usePat: true
-    dropMetadataContainerName: 'DropMetadata-ProfilingInputs'
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'), eq(variables['IsOfficialBuild'], 'true'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: artifactDropTask@0
+    displayName: 'OptProfV2:  publish profiling inputs to artifact services'
+    inputs:
+      dropServiceURI: 'https://devdiv.artifacts.visualstudio.com'
+      buildNumber: 'ProfilingInputs/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildId)'
+      sourcePath: '$(Build.ArtifactStagingDirectory)\OptProf\ProfilingInputs'
+      toLowerCase: false
+      usePat: true
+      dropMetadataContainerName: 'DropMetadata-ProfilingInputs'
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'), eq(variables['IsOfficialBuild'], 'true'))"
 
 - task: PublishBuildArtifacts@1
   displayName: "Publish NuGet.exe VSIX and EndToEnd.zip as artifact"
@@ -441,23 +459,25 @@ steps:
     artifactName: "symbols - $(RtmLabel)"  #'symbols - NonRTM' artifacts downloaded in compliance.yml for APIScan@2 task.
   condition: " and(succeeded(), eq(variables['IsOfficialBuild'], 'true')) "
 
-- task: artifactDropTask@0
-  displayName: "Upload VSTS Drop"
-  inputs:
-    dropServiceURI: 'https://devdiv.artifacts.visualstudio.com'
-    buildNumber: 'Products/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildNumber)'
-    sourcePath: "$(Build.Repository.LocalPath)\\artifacts\\VS15"
-    toLowerCase: false
-    usePat: true
-    dropMetadataContainerName: "DropMetadata-Product"
-  condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
+- ${{ if parameters.CreateVsix }}:
+  - task: artifactDropTask@0
+    displayName: "Upload VSTS Drop"
+    inputs:
+      dropServiceURI: 'https://devdiv.artifacts.visualstudio.com'
+      buildNumber: 'Products/$(System.TeamProject)/$(Build.Repository.Name)/$(Build.SourceBranchName)/$(Build.BuildNumber)'
+      sourcePath: "$(Build.Repository.LocalPath)\\artifacts\\VS15"
+      toLowerCase: false
+      usePat: true
+      dropMetadataContainerName: "DropMetadata-Product"
+    condition: " and(succeeded(),eq(variables['BuildRTM'], 'false')) "
 
-- task: PowerShell@1
-  displayName: "LocValidation: Verify VSIX"
-  inputs:
-    scriptName: "$(Build.Repository.LocalPath)\\scripts\\cibuild\\BuildValidator.ps1"
-    arguments: "-BuildRTM $(BuildRTM) -RepoRoot $(Build.Repository.LocalPath) -OutputLogsBasePath $(Build.Repository.LocalPath)\\logs -TmpPath $(Agent.TempDirectory) -ValidateVsix"
-  condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
+- ${{ if parameters.CreateVsix }}:
+  - task: PowerShell@1
+    displayName: "LocValidation: Verify VSIX"
+    inputs:
+      scriptName: "$(Build.Repository.LocalPath)\\scripts\\cibuild\\BuildValidator.ps1"
+      arguments: "-BuildRTM $(BuildRTM) -RepoRoot $(Build.Repository.LocalPath) -OutputLogsBasePath $(Build.Repository.LocalPath)\\logs -TmpPath $(Agent.TempDirectory) -ValidateVsix"
+    condition: "and(succeeded(), eq(variables['BuildRTM'], 'false'))"
 
 - task: PowerShell@1
   displayName: "LocValidation: Verify Artifacts"
