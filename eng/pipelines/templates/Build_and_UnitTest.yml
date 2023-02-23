@@ -108,16 +108,16 @@ steps:
     displayName: "Set IncludeApex variable"
     name: "includeapex"
     inputs:
-    scriptType: "inlineScript"
-    inlineScript: |
-      try {
-        $IncludeApex = -not [bool]::Parse($env:BuildRTM)
-        Write-Host "IncludeApex URL: $IncludeApex"
-        Write-Host "##vso[task.setvariable variable=IncludeApex]$IncludeApex"
-      } catch {
-        Write-Host "##vso[task.LogIssue type=error;]Unable to set IncludeApex: $_"
-        exit 1
-      }
+      scriptType: "inlineScript"
+      inlineScript: |
+        try {
+          $IncludeApex = -not [bool]::Parse($env:BuildRTM)
+          Write-Host "IncludeApex URL: $IncludeApex"
+          Write-Host "##vso[task.setvariable variable=IncludeApex]$IncludeApex"
+        } catch {
+          Write-Host "##vso[task.LogIssue type=error;]Unable to set IncludeApex: $_"
+          exit 1
+        }
 
 - task: MSBuild@1
   displayName: "Build"
