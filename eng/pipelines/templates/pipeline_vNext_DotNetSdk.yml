@@ -68,7 +68,7 @@ stages:
         UpdateGitHubCommitStatus: false
 
 - stage: Build
-  displayName: Build NuGet inserted into VS
+  displayName: Build NuGet
   dependsOn: Initialize
   jobs:
   - job: Build_and_UnitTest_NonRTM
