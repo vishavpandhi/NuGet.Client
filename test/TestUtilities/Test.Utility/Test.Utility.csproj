@@ -53,6 +53,7 @@
   <ItemGroup>
     <None Remove="compiler\resources\.signature.p7s" />
     <None Remove="compiler\resources\CentralDirectoryHeaderWithZip64ExtraField.zip" />
+    <None Remove="compiler\resources\dotnetListPackageJsonOutputForTargetFramework1.json" />
     <None Remove="compiler\resources\EmptyZip64.zip" />
     <None Remove="compiler\resources\intermediate.crt" />
     <None Remove="compiler\resources\leaf.crt" />
