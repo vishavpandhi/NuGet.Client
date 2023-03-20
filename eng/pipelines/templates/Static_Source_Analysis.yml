@@ -15,6 +15,11 @@ steps:
   continueOnError: ${{ parameters.isOfficialBuild }}
   condition: succeededOrFailed()
 
+
+- powershell: |
+    Get-ChildItem -Recurse .
+  displayName: "Display all files"
+
 - task: PowerShell@2
   displayName: "Analyze CredScan artifact"
   inputs:
