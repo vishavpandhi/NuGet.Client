@@ -17,9 +17,7 @@ jobs:
       vmImage: windows-latest
 
     steps:
-      - task: CredScan@2
-        inputs:
-          toolMajorVersion: "V2"
+      - task: CredScan@3
 
       - task: PoliCheck@1
         inputs:
