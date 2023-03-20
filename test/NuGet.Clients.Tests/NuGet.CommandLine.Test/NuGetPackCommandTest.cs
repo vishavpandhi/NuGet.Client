@@ -4261,9 +4261,10 @@ namespace Proj2
                     new string[]
                     {
                         "content/proj1_file2.txt",
-                        "lib/net40/proj1.dll",
-                        "lib/net40/proj2.dll"
-                    });
+                        "lib/net472/proj1.dll",
+                        "lib/net472/proj2.dll"
+                    },
+                    files);
             }
         }
 
