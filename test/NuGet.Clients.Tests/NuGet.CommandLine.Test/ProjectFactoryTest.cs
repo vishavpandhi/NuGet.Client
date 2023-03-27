@@ -23,7 +23,7 @@ namespace NuGet.CommandLine
 
     public class ProjectFactoryTest
     {
-        [Fact(Skip = "Disabled in release-6.2.x branch")]
+        [Fact]
         public void ProjectFactoryInitializesPropertiesForPreprocessorFromAssemblyMetadata()
         {
             // Arrange
@@ -94,7 +94,7 @@ namespace NuGet.CommandLine
         }
 
 
-        [Fact(Skip = "Disabled in release-6.2.x branch")]
+        [Fact]
         public void CommandLinePropertiesOverrideAssemblyMetadataForPreprocessor()
         {
             // Arrange
@@ -168,7 +168,7 @@ namespace NuGet.CommandLine
             }
         }
 
-        [Fact(Skip = "Disabled in release-6.2.x branch")]
+        [Fact]
         public void CommandLinePropertiesApplyForPreprocessor()
         {
             // Arrange
@@ -242,7 +242,7 @@ namespace NuGet.CommandLine
             }
         }
 
-        [Fact(Skip = "Disabled in release-6.2.x branch")]
+        [Fact]
         public void CommandLineIdPropertyOverridesAssemblyNameForPreprocessor()
         {
             // Arrange
@@ -311,7 +311,7 @@ namespace NuGet.CommandLine
         }
 
         // We run this test only on windows because this relies on Microsoft.Build.dll from the GAC and mac blows up
-        [PlatformTheory(Platform.Windows, Skip = "Disabled in release-6.2.x branch")]
+        [PlatformTheory(Platform.Windows)]
         [InlineData("1.2.9")]
         [InlineData("1.2.3-rc-12345")]
         [InlineData("1.2.3-alpha.1.8")]

@@ -2248,7 +2248,7 @@ public class B
         }
 
         // This test is a bit redundant with the ones before, but still useful for debugging
-        [Fact(Skip = "Disabled in release-6.2.x branch")]
+        [Fact]
         public void PackCommandRunner_WhenInformationalVersionIsInvalid_DoesNotThrow()
         {
             // Arrange
