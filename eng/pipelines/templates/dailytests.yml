@@ -35,6 +35,13 @@ resources:
     type: git
     name: DartLab.Templates
     ref: refs/heads/main
+resources:
+  pipelines:
+  - pipeline: nugetclientofficial
+    source: NuGet.Client-Official
+    trigger:
+        branches:
+          - dev-nkolev92-newPipeline
 
 variables:
   DOTNET_NOLOGO: 1
@@ -62,6 +69,15 @@ stages:
       vmImage: windows-latest
     steps:
     - template: Initialize_Build.yml
+    - task: DownloadPipelineArtifact@2
+      displayName: "Download symbols - NonRTM artifact"
+      inputs:
+        source: specific
+        project: "devdiv"
+        pipeline: "NuGet.Client-Official"
+        artifact: "symbols - NonRTM"
+        path: $(Pipeline.Workspace)\symbols\NonRTM
+  
 
 # Dartlab's template defines this in its own stage
 - template: Apex_Tests_On_Windows.yml
