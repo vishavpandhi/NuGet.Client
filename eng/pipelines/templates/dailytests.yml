@@ -30,18 +30,16 @@ resources:
   - pipeline: DartLab
     source: DartLab
     branch: main
-  repositories:
-  - repository: DartLabTemplates
-    type: git
-    name: DartLab.Templates
-    ref: refs/heads/main
-resources:
-  pipelines:
   - pipeline: nugetclientofficial
     source: NuGet.Client-Official
     trigger:
         branches:
           - dev-nkolev92-newPipeline
+  repositories:
+  - repository: DartLabTemplates
+    type: git
+    name: DartLab.Templates
+    ref: refs/heads/main
 
 variables:
   DOTNET_NOLOGO: 1
