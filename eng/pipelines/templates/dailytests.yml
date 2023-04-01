@@ -56,21 +56,10 @@ stages:
       vmImage: windows-latest
     steps:
     - template: Initialize_Build_SemanticVersion.yml
-
-  - job: Initialize_Build
-    dependsOn: GetSemanticVersion
-    timeoutInMinutes: 10
-    variables:
-      SemanticVersion: $[dependencies.GetSemanticVersion.outputs['setsemanticversion.SemanticVersion']]
-      BuildRevision: $[counter(format('{0}.{1}', variables['SemanticVersion'], variables['build.definitionname']), 1)]
-    pool:
-      vmImage: windows-latest
-    steps:
-    - template: Initialize_Build.yml
     - task: DownloadPipelineArtifact@2
       displayName: "Download symbols - NonRTM artifact"
       inputs:
-        source: specific
+        source: NuGet.Client-Official
         project: "devdiv"
         pipeline: "NuGet.Client-Official"
         artifact: "symbols - NonRTM"
