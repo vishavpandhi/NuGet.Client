@@ -16,7 +16,12 @@ using NuGet.Versioning;
 
 namespace NuGet.Test.Utility
 {
-    public class SimpleTestPackageContext
+#if INTERNAL_TEST_UTILITY
+    internal
+#else
+    public
+#endif
+    class SimpleTestPackageContext
     {
         public SimpleTestPackageContext(string packageId)
             : this()

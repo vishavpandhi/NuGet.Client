@@ -15,7 +15,9 @@ using NuGet.Configuration;
 using NuGet.Credentials;
 using NuGet.LibraryModel;
 using NuGet.Packaging;
+#if !NETFRAMEWORK
 using NuGet.Packaging.Signing;
+#endif
 using NuGet.Versioning;
 
 namespace Microsoft.Build.NuGetSdkResolver
@@ -40,7 +42,7 @@ namespace Microsoft.Build.NuGetSdkResolver
         /// Initializes a new instance of the NuGetSdkResolver class.
         /// </summary>
         public NuGetSdkResolver()
-            : this(new GlobalJsonReader())
+            : this(GlobalJsonReader.Instance)
         {
         }
 
@@ -117,7 +119,7 @@ namespace Microsoft.Build.NuGetSdkResolver
                 return false;
             }
 
-            Dictionary<string, string> msbuildSdkVersions = _globalJsonReader.GetMSBuildSdkVersions(context);
+            Dictionary<string, string> msbuildSdkVersions = _globalJsonReader.GetMSBuildSdkVersions(context, out _);
 
             // Check if global.json specified a version for this SDK and make sure its a version compatible with NuGet
             if (msbuildSdkVersions != null && msbuildSdkVersions.TryGetValue(id, out var globalJsonVersion) &&

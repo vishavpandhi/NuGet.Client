@@ -51,14 +51,16 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 string actualGlobalJsonPath = null;
 
-                globalJsonReader.FileRead += (_, globalJsonPath) =>
+                globalJsonReader.FileReadStart += (_, args) =>
                 {
-                    actualGlobalJsonPath = globalJsonPath;
+                    actualGlobalJsonPath = args.FullPath;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().Equal(expectedVersions);
+                globalJsonReader.GetMSBuildSdkVersions(context, out string globalJsonPath).Should().Equal(expectedVersions);
 
                 actualGlobalJsonPath.Should().Be(expectedGlobalJsonPath);
+
+                globalJsonPath.Should().Be(expectedGlobalJsonPath);
             }
         }
 
@@ -98,14 +100,16 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 string actualGlobalJsonPath = null;
 
-                globalJsonReader.FileRead += (_, globalJsonPath) =>
+                globalJsonReader.FileReadStart += (_, args) =>
                 {
-                    actualGlobalJsonPath = globalJsonPath;
+                    actualGlobalJsonPath = args.FullPath;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().BeEquivalentTo(expectedVersions);
+                globalJsonReader.GetMSBuildSdkVersions(context, out string globalJsonPath).Should().Equal(expectedVersions);
 
                 actualGlobalJsonPath.Should().Be(expectedGlobalJsonPath);
+
+                globalJsonPath.Should().Be(expectedGlobalJsonPath);
             }
         }
 
@@ -131,12 +135,12 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 string actualGlobalJsonPath = null;
 
-                globalJsonReader.FileRead += (_, globalJsonPath) =>
+                globalJsonReader.FileReadStart += (_, args) =>
                 {
-                    actualGlobalJsonPath = globalJsonPath;
+                    actualGlobalJsonPath = args.FullPath;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().BeNull();
+                globalJsonReader.GetMSBuildSdkVersions(context, out _).Should().BeNull();
 
                 context.MockSdkLogger.LoggedMessages.Count.Should().Be(1);
                 context.MockSdkLogger.LoggedMessages.First().Message.Should().Be(
@@ -168,12 +172,12 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 string actualGlobalJsonPath = null;
 
-                globalJsonReader.FileRead += (_, globalJsonPath) =>
+                globalJsonReader.FileReadStart += (_, args) =>
                 {
-                    actualGlobalJsonPath = globalJsonPath;
+                    actualGlobalJsonPath = args.FullPath;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().Equal(expectedVersions);
+                globalJsonReader.GetMSBuildSdkVersions(context, out _).Should().Equal(expectedVersions);
 
                 actualGlobalJsonPath.Should().Be(expectedGlobalJsonPath);
             }
@@ -201,19 +205,19 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 Dictionary<string, int> globalJsonReadCountByPath = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-                globalJsonReader.FileRead += (_, globalJsonPath) =>
+                globalJsonReader.FileReadStart += (_, args) =>
                 {
-                    if (globalJsonReadCountByPath.ContainsKey(globalJsonPath))
+                    if (globalJsonReadCountByPath.ContainsKey(args.FullPath))
                     {
-                        globalJsonReadCountByPath[globalJsonPath]++;
+                        globalJsonReadCountByPath[args.FullPath]++;
                     }
                     else
                     {
-                        globalJsonReadCountByPath[globalJsonPath] = 1;
+                        globalJsonReadCountByPath[args.FullPath] = 1;
                     }
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().Equal(expectedVersions);
+                globalJsonReader.GetMSBuildSdkVersions(context, out _).Should().Equal(expectedVersions);
 
                 globalJsonReadCountByPath.ContainsKey(expectedGlobalJsonReaderPath).Should().BeTrue();
 
@@ -221,7 +225,7 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 Parallel.For(0, Environment.ProcessorCount * 2, _ =>
                 {
-                    globalJsonReader.GetMSBuildSdkVersions(context).Should().Equal(expectedVersions);
+                    globalJsonReader.GetMSBuildSdkVersions(context, out string globalJsonPath).Should().Equal(expectedVersions);
                 });
 
                 globalJsonReadCountByPath.ContainsKey(expectedGlobalJsonReaderPath).Should().BeTrue();
@@ -236,7 +240,7 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 Parallel.For(0, Environment.ProcessorCount * 2, _ =>
                 {
-                    globalJsonReader.GetMSBuildSdkVersions(context).Should().Equal(expectedVersions);
+                    globalJsonReader.GetMSBuildSdkVersions(context, out string globalJsonPath).Should().Equal(expectedVersions);
                 });
 
                 globalJsonReadCountByPath.ContainsKey(expectedGlobalJsonReaderPath).Should().BeTrue();
@@ -262,12 +266,12 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 bool wasGlobalJsonRead = false;
 
-                globalJsonReader.FileRead += (sender, args) =>
+                globalJsonReader.FileReadStart += (_, _) =>
                 {
                     wasGlobalJsonRead = true;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context, globalJsonFileName).Should().BeNull();
+                globalJsonReader.GetMSBuildSdkVersions(context, out _, fileName: globalJsonFileName).Should().BeNull();
 
                 wasGlobalJsonRead.Should().BeFalse();
             }
@@ -293,12 +297,12 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 bool wasGlobalJsonRead = false;
 
-                globalJsonReader.FileRead += (sender, args) =>
+                globalJsonReader.FileReadStart += (_, _) =>
                 {
                     wasGlobalJsonRead = true;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().BeNull();
+                globalJsonReader.GetMSBuildSdkVersions(context, out _).Should().BeNull();
 
                 wasGlobalJsonRead.Should().BeTrue();
             }
@@ -329,12 +333,12 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 bool wasGlobalJsonRead = false;
 
-                globalJsonReader.FileRead += (sender, args) =>
+                globalJsonReader.FileReadStart += (_, _) =>
                 {
                     wasGlobalJsonRead = true;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().BeNull();
+                globalJsonReader.GetMSBuildSdkVersions(context, out _).Should().BeNull();
 
                 wasGlobalJsonRead.Should().BeTrue();
             }
@@ -352,12 +356,12 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
             bool wasGlobalJsonRead = false;
 
-            globalJsonReader.FileRead += (sender, args) =>
+            globalJsonReader.FileReadStart += (_, _) =>
             {
                 wasGlobalJsonRead = true;
             };
 
-            globalJsonReader.GetMSBuildSdkVersions(context).Should().BeNull();
+            globalJsonReader.GetMSBuildSdkVersions(context, out _).Should().BeNull();
 
             wasGlobalJsonRead.Should().BeFalse();
         }
@@ -408,12 +412,12 @@ namespace Microsoft.Build.NuGetSdkResolver.Test
 
                 bool wasGlobalJsonRead = false;
 
-                globalJsonReader.FileRead += (sender, args) =>
+                globalJsonReader.FileReadStart += (_, _) =>
                 {
                     wasGlobalJsonRead = true;
                 };
 
-                globalJsonReader.GetMSBuildSdkVersions(context).Should().BeEquivalentTo(new Dictionary<string, string>
+                globalJsonReader.GetMSBuildSdkVersions(context, out _).Should().BeEquivalentTo(new Dictionary<string, string>
                 {
                     ["Sdk1"] = "1.0.0",
                     ["Sdk2"] = "2.0.0"

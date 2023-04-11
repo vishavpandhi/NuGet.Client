@@ -258,7 +258,7 @@
     be localized from each project
     ============================================================
   -->
-  <Target Name="GetLocalizationInputs" DependsOnTargets="GetTargetFrameworkSet" Returns="@(DllsToLocalize)" Condition="'$(Shipping)' == 'true'">
+  <Target Name="GetLocalizationInputs" DependsOnTargets="GetTargetFrameworkSet" Returns="@(DllsToLocalize)" Condition="'$(Shipping)' == 'true' And '$(EnableLocalization)' != 'false'">
     <MSBuild
       Projects="$(MSBuildProjectFullPath)"
       Targets="$(LocTargets)"
@@ -320,7 +320,7 @@ Condition=" ('%(Extension)' == '.dll' OR '%(Filename)' == 'NuGet.CommandLine.XPl
     <ItemGroup>
       <_AllResourceDlls Include="$(OutputPath)**\$(AssemblyName).resources.dll"/>
       <LocalizedFilesForVsix Include="@(_AllResourceDlls)">
-        <TargetPath>$([MSBuild]::MakeRelative($(OutputPath), %(_AllResourceDlls.Identity)))</TargetPath>
+        <TargetPath Condition="'%(_AllResourceDlls.Identity)' != ''">$([MSBuild]::MakeRelative($(OutputPath), %(_AllResourceDlls.Identity)))</TargetPath>
       </LocalizedFilesForVsix>
     </ItemGroup>
   </Target>

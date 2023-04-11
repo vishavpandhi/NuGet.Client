@@ -25,7 +25,12 @@ namespace NuGet.Test.Utility
 {
     using IPackageFile = NuGet.Packaging.IPackageFile;
 
-    public static class SimpleTestPackageUtility
+#if INTERNAL_TEST_UTILITY
+    internal
+#else
+    public
+#endif
+    static class SimpleTestPackageUtility
     {
         public static async Task CreateFullPackagesAsync(string repositoryDir, IDictionary<string, IEnumerable<string>> packages)
         {
@@ -126,13 +131,17 @@ namespace NuGet.Test.Utility
         /// <summary>
         /// Write a zip file to a stream.
         /// </summary>
-        public static async Task CreatePackageAsync(Stream stream, SimpleTestPackageContext packageContext)
+        public static
+#if IS_SIGNING_SUPPORTED
+            async
+#endif
+            Task CreatePackageAsync(Stream stream, SimpleTestPackageContext packageContext, ILogger logger = null)
         {
             var id = packageContext.Id;
             var version = packageContext.Version;
             var runtimeJson = packageContext.RuntimeJson;
             var pathResolver = new VersionFolderPathResolver(null);
-            var testLogger = new TestLogger();
+            logger ??= NullLogger.Instance;
             var tempStream = stream;
             var isUsingTempStream = false;
 
@@ -288,7 +297,7 @@ namespace NuGet.Test.Utility
 #if IS_SIGNING_SUPPORTED
                     using (var request = GetPrimarySignRequest(packageContext))
                     {
-                        await AddSignatureToPackageAsync(packageContext, signPackage, request, testLogger);
+                        await AddSignatureToPackageAsync(packageContext, signPackage, request, logger);
                     }
 
                     if (packageContext.IsRepositoryCounterSigned)
@@ -299,7 +308,7 @@ namespace NuGet.Test.Utility
                                                                                 packageContext.V3ServiceIndexUrl,
                                                                                 packageContext.PackageOwners))
                         {
-                            await AddRepositoryCountersignatureToSignedPackageAsync(packageContext, signPackage, request, testLogger);
+                            await AddRepositoryCountersignatureToSignedPackageAsync(packageContext, signPackage, request, logger);
                         }
                     }
 #endif
@@ -308,6 +317,9 @@ namespace NuGet.Test.Utility
 
             // Reset position
             stream.Position = 0;
+#if !IS_SIGNING_SUPPORTED
+            return Task.CompletedTask;
+#endif
         }
 
         private static List<(string, List<PackageDependency>)> GetPackageDependencies(SimpleTestPackageContext package)

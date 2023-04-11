@@ -1,0 +1,86 @@
+<Project>
+  <PropertyGroup>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <MergeAllowdup Include="ArrayPool`1"/>
+    <MergeAllowdup Include="CompatibilityListProvider"/>
+    <MergeAllowdup Include="CompatibilityMappingComparer"/>
+    <MergeAllowdup Include="CompatibilityProvider"/>
+    <MergeAllowdup Include="CompatibilityTable"/>
+    <MergeAllowdup Include="DefaultCompatibilityProvider"/>
+    <MergeAllowdup Include="DefaultFrameworkMappings"/>
+    <MergeAllowdup Include="DefaultFrameworkNameProvider"/>
+    <MergeAllowdup Include="DefaultPortableFrameworkMappings"/>
+    <MergeAllowdup Include="FallbackFramework"/>
+    <MergeAllowdup Include="FrameworkConstants"/>
+    <MergeAllowdup Include="FrameworkException"/>
+    <MergeAllowdup Include="FrameworkExpander"/>
+    <MergeAllowdup Include="FrameworkNameHelpers"/>
+    <MergeAllowdup Include="FrameworkNameProvider"/>
+    <MergeAllowdup Include="FrameworkPrecedenceSorter"/>
+    <MergeAllowdup Include="FrameworkRange"/>
+    <MergeAllowdup Include="FrameworkRangeComparer"/>
+    <MergeAllowdup Include="FrameworkReducer"/>
+    <MergeAllowdup Include="FrameworkRuntimePair"/>
+    <MergeAllowdup Include="FrameworkSpecificMapping"/>
+    <MergeAllowdup Include="IFrameworkCompatibilityListProvider"/>
+    <MergeAllowdup Include="IFrameworkCompatibilityProvider"/>
+    <MergeAllowdup Include="IFrameworkMappings"/>
+    <MergeAllowdup Include="IFrameworkNameProvider"/>
+    <MergeAllowdup Include="IFrameworkSpecific"/>
+    <MergeAllowdup Include="IFrameworkTargetable"/>
+    <MergeAllowdup Include="IPortableFrameworkMappings"/>
+    <MergeAllowdup Include="NuGetFramework"/>
+    <MergeAllowdup Include="NuGetFrameworkExtensions"/>
+    <MergeAllowdup Include="NuGetFrameworkFullComparer"/>
+    <MergeAllowdup Include="NuGetFrameworkNameComparer"/>
+    <MergeAllowdup Include="NuGetFrameworkSorter"/>
+    <MergeAllowdup Include="NuGetFrameworkUtility"/>
+    <MergeAllowdup Include="OneWayCompatibilityMappingEntry"/>
+    <MergeAllowdup Include="Strings"/>
+  </ItemGroup>
+  
+  <Target Name="DetermineILMergeInputsOutputs">
+    <PropertyGroup>
+      <PathToBuiltAssembly>@(IntermediateAssembly)</PathToBuiltAssembly>
+      <PathToMergedAssembly>@(IntermediateAssembly->'%(RootDir)%(Directory)merged\%(Filename)%(Extension)')</PathToMergedAssembly>
+      <PathToILMergeLog>$(IntermediateOutputPath)ILMerge.log</PathToILMergeLog>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyToMerge Include="$(PathToBuiltAssembly)" />
+      <AssemblyToMerge Include="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.Extension)' == '.dll' And '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == ''" />
+      <AssemblyToMerge Include="@(RuntimeCopyLocalPaths)" Condition="'%(RuntimeCopyLocalPaths.Extension)' == '.dll' And '%(RuntimeCopyLocalPaths.DestinationSubDirectory)' == ''" />
+      <IntermediateAssembly Remove="@(IntermediateAssembly)" />
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+      <RuntimeCopyLocalPaths Remove="@(RuntimeCopyLocalPaths)" />
+      <IntermediateAssembly Include="$(PathToMergedAssembly)" />
+    </ItemGroup>
+    <Message Text="$(MSBuildProjectName) -&gt; $(PathToMergedAssembly)" Importance="High" />
+    <Delete Files="$(PathToILMergeLog)" />
+  </Target>
+
+  <Target Name="ILMergeAssembly"
+          AfterTargets="CoreCompile"
+          Condition="'$(IsXPlat)' != 'true'"
+          DependsOnTargets="DetermineILMergeInputsOutputs"
+          Inputs="$(PathToBuiltAssembly);@(AssemblyToMerge)"
+          Outputs="$(PathToMergedAssembly)">
+    <PropertyGroup>
+      <IlmergeCommand>&quot;$(ILMergeExePath)&quot; /out:$(PathToMergedAssembly) @(AssemblyToMerge -> '/lib:%(RootDir)%(Directory)', ' ') @(MergeAllowDup -> '/allowdup:%(Identity)', ' ') /log:$(PathToILMergeLog) /internalize</IlmergeCommand>
+      <IlmergeCommand Condition="Exists($(MS_PFX_PATH))">$(IlmergeCommand) /delaysign /keyfile:$(MS_PFX_PATH)</IlmergeCommand>
+      <IlmergeCommand>$(IlmergeCommand) @(AssemblyToMerge->'%(fullpath)', ' ')</IlmergeCommand>
+      <IlmergeCommand Condition="@(LocResource->Count()) > 0">$(IlmergeCommand) @(LocResource->'%(fullpath)', ' ')</IlmergeCommand>
+    </PropertyGroup>
+    <ItemGroup>
+      <EmbedInBinLog Include="$(PathToILMergeLog)" />
+    </ItemGroup>
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName($(PathToMergedAssembly)))" />
+    <Exec Command="$(IlmergeCommand)" ContinueOnError="false" />
+    <OnError ExecuteTargets="OnILMergeError" />
+  </Target>
+
+  <Target Name="OnILMergeError">
+    <Delete Files="$(PathToMergedAssembly)" />
+  </Target>
+</Project>

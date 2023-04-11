@@ -1,0 +1,5 @@
+NuGet.Build.SdkResolver.NuGetSdkResolver
+NuGet.Build.SdkResolver.NuGetSdkResolver.NuGetSdkResolver() -> void
+override NuGet.Build.SdkResolver.NuGetSdkResolver.Name.get -> string
+override NuGet.Build.SdkResolver.NuGetSdkResolver.Priority.get -> int
+override NuGet.Build.SdkResolver.NuGetSdkResolver.Resolve(Microsoft.Build.Framework.SdkReference sdkReference, Microsoft.Build.Framework.SdkResolverContext resolverContext, Microsoft.Build.Framework.SdkResultFactory resultFactory) -> Microsoft.Build.Framework.SdkResult

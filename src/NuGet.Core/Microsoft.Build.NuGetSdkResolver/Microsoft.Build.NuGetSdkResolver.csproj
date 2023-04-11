@@ -32,6 +32,7 @@
     <EmbeddedResource Update="Strings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>Microsoft.Build.NuGetSdkResolver</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
 </Project>

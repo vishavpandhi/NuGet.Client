@@ -33,14 +33,19 @@ namespace Microsoft.Build.NuGetSdkResolver
         /// </summary>
         private readonly ConcurrentDictionary<FileInfo, (DateTime LastWriteTime, Lazy<Dictionary<string, string>> Lazy)> _fileCache = new ConcurrentDictionary<FileInfo, (DateTime, Lazy<Dictionary<string, string>>)>(FileSystemInfoFullNameEqualityComparer.Instance);
 
-        /// <summary>
-        /// Occurs when a file is read.
-        /// </summary>
-        public event EventHandler<string> FileRead;
+        /// <inheritdoc />
+        public event EventHandler<GlobalJsonFileReadEventArgs> FileReadStart;
 
-        /// <inheritdoc cref="IGlobalJsonReader.GetMSBuildSdkVersions(SdkResolverContext, string)" />
-        public Dictionary<string, string> GetMSBuildSdkVersions(SdkResolverContext context, string fileName = GlobalJsonFileName)
+        /// <inheritdoc />
+        public event EventHandler<GlobalJsonFileReadEventArgs> FileReadStop;
+
+        public static GlobalJsonReader Instance { get; } = new GlobalJsonReader();
+
+        /// <inheritdoc />
+        public Dictionary<string, string> GetMSBuildSdkVersions(SdkResolverContext context, out string globalJsonFullPath, string fileName = GlobalJsonFileName)
         {
+            globalJsonFullPath = null;
+
             // Prefer looking next to the solution file as its more likely to be closer to global.json
             string startingPath = GetStartingPath(context);
 
@@ -86,6 +91,8 @@ namespace Microsoft.Build.NuGetSdkResolver
                 });
 
             Dictionary<string, string> sdkVersions = cacheEntry.Lazy.Value;
+
+            globalJsonFullPath = globalJsonPath.FullName;
 
             return sdkVersions;
         }
@@ -154,7 +161,7 @@ namespace Microsoft.Build.NuGetSdkResolver
         /// </summary>
         /// <param name="json">The JSON to parse as a string.</param>
         /// <returns>A <see cref="Dictionary{TKey, TValue}" /> containing MSBuild project SDK versions if any were found, otherwise <c>null</c>.</returns>
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static Dictionary<string, string> ParseMSBuildSdkVersionsFromJson(string json)
         {
             using (var reader = new JsonTextReader(new StringReader(json)))
@@ -209,14 +216,43 @@ namespace Microsoft.Build.NuGetSdkResolver
         }
 
         /// <summary>
-        /// Fires the <see cref="FileRead" /> event for the specified file.
+        /// Fires the <see cref="FileReadStart" /> event for the specified file.
         /// </summary>
         /// <param name="filePath">The full path to file that was read.</param>
-        private void OnFileRead(string filePath)
+        /// <param name="projectFullPath">The full path to project file that caused the file to be read.</param>
+        /// <param name="solutionFullPath">The full path to solution file that cause the file to be read.</param>
+        private void OnFileReadStart(string filePath, string projectFullPath, string solutionFullPath)
         {
-            EventHandler<string> fileReadEventHandler = FileRead;
+            EventHandler<GlobalJsonFileReadEventArgs> fileReadStartEventHandler = FileReadStart;
 
-            fileReadEventHandler?.Invoke(this, filePath);
+            fileReadStartEventHandler?.Invoke(
+                this,
+                new GlobalJsonFileReadEventArgs
+                {
+                    FullPath = filePath,
+                    ProjectFullPath = projectFullPath,
+                    SolutionFullPath = solutionFullPath
+                });
+        }
+
+        /// <summary>
+        /// Fires the <see cref="FileReadStart" /> event for the specified file.
+        /// </summary>
+        /// <param name="filePath">The full path to file that was read.</param>
+        /// <param name="projectFullPath">The full path to project file that caused the file to be read.</param>
+        /// <param name="solutionFullPath">The full path to solution file that cause the file to be read.</param>
+        private void OnFileReadStop(string filePath, string projectFullPath, string solutionFullPath)
+        {
+            EventHandler<GlobalJsonFileReadEventArgs> fileReadStopEventHandler = FileReadStop;
+
+            fileReadStopEventHandler?.Invoke(
+                this,
+                new GlobalJsonFileReadEventArgs
+                {
+                    FullPath = filePath,
+                    ProjectFullPath = projectFullPath,
+                    SolutionFullPath = solutionFullPath
+                });
         }
 
         /// <summary>
@@ -231,37 +267,44 @@ namespace Microsoft.Build.NuGetSdkResolver
             // Load the file as a string and check if it has an msbuild-sdks section.  Parsing the contents requires Newtonsoft.Json.dll to be loaded which can be expensive
             string json;
 
-            try
-            {
-                json = File.ReadAllText(globalJsonPath);
-            }
-            catch (Exception e)
-            {
-                // Failed to read file "{0}". {1}
-                sdkResolverContext.Logger.LogMessage(string.Format(CultureInfo.CurrentCulture, Strings.FailedToReadGlobalJson, globalJsonPath, e.Message));
-
-                return null;
-            }
-
-            OnFileRead(globalJsonPath);
-
-            // Look ahead in the contents to see if there is an msbuild-sdks section.  Deserializing the file requires us to load
-            // Newtonsoft.Json which is 500 KB while a global.json is usually ~100 bytes of text.
-            if (json.IndexOf(MSBuildSdksPropertyName, StringComparison.Ordinal) == -1)
-            {
-                return null;
-            }
+            OnFileReadStart(globalJsonPath, sdkResolverContext.ProjectFilePath, sdkResolverContext.SolutionFilePath);
 
             try
             {
-                return ParseMSBuildSdkVersionsFromJson(json);
-            }
-            catch (Exception e)
-            {
-                // Failed to parse "{0}". {1}
-                sdkResolverContext.Logger.LogMessage(string.Format(CultureInfo.CurrentCulture, Strings.FailedToParseGlobalJson, globalJsonPath, e.Message));
+                try
+                {
+                    json = File.ReadAllText(globalJsonPath);
+                }
+                catch (Exception e)
+                {
+                    // Failed to read file "{0}". {1}
+                    sdkResolverContext.Logger.LogMessage(string.Format(CultureInfo.CurrentCulture, Strings.FailedToReadGlobalJson, globalJsonPath, e.Message));
 
-                return null;
+                    return null;
+                }
+
+                // Look ahead in the contents to see if there is an msbuild-sdks section.  Deserializing the file requires us to load
+                // Newtonsoft.Json which is 500 KB while a global.json is usually ~100 bytes of text.
+                if (json.IndexOf(MSBuildSdksPropertyName, StringComparison.Ordinal) == -1)
+                {
+                    return null;
+                }
+
+                try
+                {
+                    return ParseMSBuildSdkVersionsFromJson(json);
+                }
+                catch (Exception e)
+                {
+                    // Failed to parse "{0}". {1}
+                    sdkResolverContext.Logger.LogMessage(string.Format(CultureInfo.CurrentCulture, Strings.FailedToParseGlobalJson, globalJsonPath, e.Message));
+
+                    return null;
+                }
+            }
+            finally
+            {
+                OnFileReadStop(globalJsonPath, sdkResolverContext.ProjectFilePath, sdkResolverContext.SolutionFilePath);
             }
         }
     }

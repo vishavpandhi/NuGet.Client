@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(TargetFrameworksLibrary)</TargetFrameworks>
+    <Shipping>true</Shipping>
+    <PackProject>true</PackProject>
+    <Description>A NuGet-based implementation of an MSBuild project SDK resolver.</Description>
+    <XPLATProject>true</XPLATProject>
+    <NoWarn>$(NoWarn);RS0041</NoWarn>
+    <SkipShared>true</SkipShared>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <EnableLocalization>false</EnableLocalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver\FileSystemInfoFullNameEqualityComparer.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver\GlobalJsonFileReadEventArgs.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver\GlobalJsonReader.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver\IGlobalJsonReader.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver\NuGetSdkLogger.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver\Strings.Designer.cs" Link="%(Filename)%(Extension)" DesignTime="True" AutoGen="True" DependentUpon="Strings.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Framework" ExcludeAssets="runtime" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NuGet.Commands\NuGet.Commands.csproj" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\Microsoft.Build.NuGetSdkResolver\Strings.resx" Link="%(Filename)%(Extension)" Generator="ResXFileCodeGenerator" LastGenOutput="Strings.Designer.cs" CustomToolNamespace="Microsoft.Build.NuGetSdkResolver" LogicalName="Microsoft.Build.NuGetSdkResolver.Strings.resources" />
+  </ItemGroup>
+  <Import Project="ILMerge.props" />
+</Project>

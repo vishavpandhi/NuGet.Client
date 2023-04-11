@@ -19,6 +19,7 @@
       "src\\NuGet.Clients\\NuGet.VisualStudio.OnlineEnvironment.Client\\NuGet.VisualStudio.OnlineEnvironment.Client.csproj",
       "src\\NuGet.Clients\\NuGet.VisualStudio\\NuGet.VisualStudio.csproj",
       "src\\NuGet.Core\\Microsoft.Build.NuGetSdkResolver\\Microsoft.Build.NuGetSdkResolver.csproj",
+      "src\\NuGet.Core\\NuGet.Build.SdkResolver\\NuGet.Build.SdkResolver.csproj",
       "src\\NuGet.Core\\NuGet.Build.Tasks.Console\\NuGet.Build.Tasks.Console.csproj",
       "src\\NuGet.Core\\NuGet.Build.Tasks\\NuGet.Build.Tasks.csproj",
       "src\\NuGet.Core\\NuGet.Commands\\NuGet.Commands.csproj",

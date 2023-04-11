@@ -1,0 +1,2 @@
+# NuGet.Build.SdkResolver
+TODO

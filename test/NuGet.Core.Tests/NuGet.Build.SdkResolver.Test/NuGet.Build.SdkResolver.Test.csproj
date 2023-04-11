@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(MinimalTargetFrameworksExeSigning)</TargetFrameworks>
+    <UseParallelXunit>true</UseParallelXunit>
+    <Description>Unit tests for NuGet.Build.SdkResolver.</Description>
+    <SkipShared>true</SkipShared>
+    <SigningNotSupported Condition="'$(TargetFramework)' != 'net472'">true</SigningNotSupported>
+    <DefineConstants Condition="'$(IsXPlat)' != 'true'">$(DefineConstants);INTERNAL_TEST_UTILITY</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Framework" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="NuGet.Frameworks" VersionOverride="5.11.0" ExcludeAssets="Compile" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" Condition="'$(TargetFramework)' == 'net472'" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\NuGet.Core\NuGet.Build.SdkResolver\NuGet.Build.SdkResolver.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="SdkResolverOutput"
+                      Condition="'$(IsXPlat)' != 'true'" />
+    <ProjectReference Include="..\..\..\src\NuGet.Core\NuGet.Build.SdkResolver\NuGet.Build.SdkResolver.csproj"
+                      Condition="'$(IsXPlat)' == 'true'" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(IsXPlat)' != 'true'">
+    <Compile Include="..\..\TestUtilities\Test.Utility\SimpleTestSetup\SimpleTestPackageContext.cs" />
+    <Compile Include="..\..\TestUtilities\Test.Utility\SimpleTestSetup\SimpleTestPackageUtility.cs" />
+    <Compile Include="..\..\TestUtilities\Test.Utility\SimpleTestSetup\SimpleTestPathContext.cs" />
+    <Compile Include="..\..\TestUtilities\Test.Utility\SimpleTestSetup\SimpleTestSettingsContext.cs" />
+    <Compile Include="..\..\TestUtilities\Test.Utility\TestDirectory.cs" />
+    <Compile Include="..\..\TestUtilities\Test.Utility\TestFileSystemUtility.cs" />
+    <Compile Include="..\..\TestUtilities\Test.Utility\ZipExtensions.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver.Test\MockGlobalJsonReader.cs" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver.Test\MockSdkLogger.cs" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver.Test\MockSdkResult.cs" />
+    <Compile Include="..\Microsoft.Build.NuGetSdkResolver.Test\MockSdkResultFactory.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(IsXPlat)' == 'true'">
+    <ProjectReference Include="..\..\..\src\NuGet.Core\NuGet.Commands\NuGet.Commands.csproj" />
+    <ProjectReference Include="..\..\TestUtilities\Test.Utility\Test.Utility.csproj" />
+  </ItemGroup>
+  <Target Name="AddReferenceToILMergedAssembly"
+          BeforeTargets="ResolveAssemblyReferences"
+          Condition="'$(IsXPlat)' != 'true'">
+    <ItemGroup>
+      <Reference Include="%(SdkResolverOutput.Identity)" />
+      <None Include="%(SdkResolverOutput.Identity)" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+</Project>
