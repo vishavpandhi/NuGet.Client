@@ -1,7 +1,10 @@
 parameters:
 - name: DotNetSdkVersion
   type: string
-
+- name: DotNetSdkIncludePreviewVersions
+  type: boolean
+  default: false
+  
 steps:
 - task: UseDotNet@2
   displayName: 'Use .NET SDK'
@@ -9,6 +12,7 @@ steps:
     packageType: sdk
     version: ${{ parameters.DotNetSdkVersion }}
     installationPath: $(Agent.TempDirectory)/dotnet
+    includePreviewVersions: ${{ parameters.DotNetSdkIncludePreviewVersions }}
 
 - task: PowerShell@2
   displayName: "Print Environment Variables"
