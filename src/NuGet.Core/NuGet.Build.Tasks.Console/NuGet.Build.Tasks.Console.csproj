@@ -15,6 +15,9 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <UsePublicApiAnalyzer>false</UsePublicApiAnalyzer>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <MicrosoftBuildVersion>17.6.0-preview-23179-01</MicrosoftBuildVersion>
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     <RollForward>LatestMajor</RollForward>
   </PropertyGroup>
 

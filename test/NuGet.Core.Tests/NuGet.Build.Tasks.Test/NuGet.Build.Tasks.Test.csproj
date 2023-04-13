@@ -3,6 +3,8 @@
     <TargetFrameworks>$(MinimalTargetFrameworksExeSigning)</TargetFrameworks>
     <UseParallelXunit>true</UseParallelXunit>
     <Description>Unit tests for NuGet.Build.Tasks.</Description>
+    <MicrosoftBuildVersion>17.6.0-preview-23179-01</MicrosoftBuildVersion>
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
   </PropertyGroup>
 
   <ItemGroup>
