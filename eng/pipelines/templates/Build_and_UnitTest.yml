@@ -5,7 +5,7 @@ steps:
     scriptType: "inlineScript"
     inlineScript: |
       Write-Host "##vso[build.updatebuildnumber]$env:FullVstsBuildNumber"
-      Write-Host "$env:NUGET_CERT_REVOCATION_MODE = 'offline'"
+      Write-Host "##vso[task.setvariable variable=NUGET_CERT_REVOCATION_MODE;]offline"
       gci env:* | sort-object name
 
 - task: NuGetToolInstaller@0
