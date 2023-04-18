@@ -1,10 +1,11 @@
-steps:  
+steps:
 - task: PowerShell@1
   displayName: "Update Build Number"
   inputs:
     scriptType: "inlineScript"
     inlineScript: |
       Write-Host "##vso[build.updatebuildnumber]$env:FullVstsBuildNumber"
+      Write-Host "$env:NUGET_CERT_REVOCATION_MODE = 'offline'"
       gci env:* | sort-object name
 
 - task: NuGetToolInstaller@0
