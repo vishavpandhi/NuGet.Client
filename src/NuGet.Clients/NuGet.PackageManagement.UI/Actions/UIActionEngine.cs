@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -323,7 +324,7 @@ namespace NuGet.PackageManagement.UI
                 // collect the install state of the existing packages
                 foreach (IProjectContextInfo project in uiService.Projects) // only one project when PM UI is in project mode
                 {
-                    if (projectsCount == 1 && userAction != null && !userAction.IsSolutionLevel && userAction.Action == NuGetProjectActionType.Install && project.ProjectStyle == ProjectModel.ProjectStyle.PackageReference && project.ProjectKind == NuGetProjectKind.PackageReference)
+                    if (projectsCount == 1 && userAction != null && !userAction.IsSolutionLevel && (userAction.Action == NuGetProjectActionType.Install || userAction.Action == NuGetProjectActionType.Update) && project.ProjectStyle == ProjectModel.ProjectStyle.PackageReference && project.ProjectKind == NuGetProjectKind.PackageReference)
                     {
                         IInstalledAndTransitivePackages installedAndTransitives = await project.GetInstalledAndTransitivePackagesAsync(sb, cancellationToken);
                         installedPackages = installedAndTransitives.InstalledPackages;
@@ -872,6 +873,21 @@ namespace NuGet.PackageManagement.UI
 
                 results.AddRange(actions);
             }
+            else if (userAction.Action == NuGetProjectActionType.Update)
+            {
+                var packageIdentity = new PackageIdentity(userAction.PackageId, userAction.Version);
+
+                IReadOnlyList<ProjectAction> actions = await projectManagerService.GetUpdateActionsAsync(
+                    projectIds,
+                    new ReadOnlyCollection<PackageIdentity>(new[] { packageIdentity }),
+                    VersionConstraints.None,
+                    includePrelease,
+                    uiService.DependencyBehavior,
+                    packageSourceNames,
+                    token);
+
+                results.AddRange(actions);
+            }
             else
             {
                 var packageIdentity = new PackageIdentity(userAction.PackageId, version: null);
@@ -928,6 +944,7 @@ namespace NuGet.PackageManagement.UI
             {
                 var installed = new Dictionary<string, PackageIdentity>(StringComparer.OrdinalIgnoreCase);
                 var uninstalled = new Dictionary<string, PackageIdentity>(StringComparer.OrdinalIgnoreCase);
+                var updatedDictionary = new Dictionary<string, PackageIdentity>(StringComparer.OrdinalIgnoreCase);
                 var packageIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (ProjectAction action in actions)
@@ -940,6 +957,10 @@ namespace NuGet.PackageManagement.UI
                     if (action.ProjectActionType == NuGetProjectActionType.Install)
                     {
                         installed[packageIdentity.Id] = packageIdentity;
+                    }
+                    else if (action.ProjectActionType == NuGetProjectActionType.Update)
+                    {
+                        updatedDictionary[packageIdentity.Id] = packageIdentity;
                     }
                     else
                     {
@@ -955,12 +976,18 @@ namespace NuGet.PackageManagement.UI
                 {
                     var isInstalled = installed.ContainsKey(packageId);
                     var isUninstalled = uninstalled.ContainsKey(packageId);
+                    var isUpdated = updatedDictionary.ContainsKey(packageId);
 
                     if (isInstalled && isUninstalled)
                     {
                         // the package is updated
                         updated.Add(new UpdatePreviewResult(uninstalled[packageId], installed[packageId]));
                         installed.Remove(packageId);
+                    }
+                    else if (isUpdated)
+                    {
+                        updated.Add(new UpdatePreviewResult(uninstalled[packageId], installed[packageId]));
+
                     }
                     else if (isInstalled && !isUninstalled)
                     {

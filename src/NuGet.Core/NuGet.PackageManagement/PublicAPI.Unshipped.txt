@@ -1,1 +1,2 @@
 #nullable enable
+NuGet.PackageManagement.NuGetProjectActionType.Update = 2 -> NuGet.PackageManagement.NuGetProjectActionType
