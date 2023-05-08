@@ -263,6 +263,7 @@ stages:
       MSBUILDDISABLENODEREUSE: 1
       # Set MSBuildEnableWorkloadResolver to work around https://github.com/dotnet/sdk/issues/17461
       MSBuildEnableWorkloadResolver: false
+      DOTNET_SDK_VERSIONS: -Channel 8.0 -Quality daily;-Channel 7.0;-Channel 6.0 -Runtime dotnet;-Channel 5.0;-Channel 3.1
     condition: "and(succeeded(), ne(variables['RunTestsOnMac'], 'false'))"
     pool:
       vmImage: macos-latest
