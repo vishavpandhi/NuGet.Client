@@ -24,17 +24,17 @@
     <IsEscrowMode>false</IsEscrowMode>
 
     <!-- Visual Studio Insertion Logic -->
-    <VsTargetMajorVersion>$([MSBuild]::Add(11, $(MajorNuGetVersion)))</VsTargetMajorVersion>
-    <VsTargetBranch>main</VsTargetBranch>
-    <VsTargetChannel>int.$(VsTargetBranch)</VsTargetChannel>
-    <VsTargetChannelForTests>$(VsTargetChannel)</VsTargetChannelForTests>
+    <VsTargetMajorVersion Condition="'$(VsTargetMajorVersion)' == ''">$([MSBuild]::Add(11, $(MajorNuGetVersion)))</VsTargetMajorVersion>
+    <VsTargetBranch Condition="'$(VsTargetBranch)' == '' And '$(IsEscrowMode)' != 'true'">main</VsTargetBranch>
+    <VsTargetChannel Condition="'$(VsTargetChannel)' == '' And '$(IsEscrowMode)' != 'true'">int.$(VsTargetBranch)</VsTargetChannel>
+    <VsTargetChannelForTests Condition="'$(VsTargetChannelForTests)' == ''">$(VsTargetChannel)</VsTargetChannelForTests>
 
     <!-- NuGet SDK VS package Semantic Version -->
     <NuGetSdkVsSemanticVersion>$(VsTargetMajorVersion).$(MinorNuGetVersion).$(PatchNuGetVersion)</NuGetSdkVsSemanticVersion>
 
     <!-- This branches are used for creating insertion PRs -->
-    <VsTargetBranch Condition="'$(IsEscrowMode)' == 'true'">rel/d$(VsTargetMajorVersion).$(MinorNuGetVersion)</VsTargetBranch>
-    <VsTargetChannel Condition="'$(IsEscrowMode)' == 'true'">int.d$(VsTargetMajorVersion).$(MinorNuGetVersion)</VsTargetChannel>
+    <VsTargetBranch Condition="'$(VsTargetBranch)' == '' And '$(IsEscrowMode)' == 'true'">rel/d$(VsTargetMajorVersion).$(MinorNuGetVersion)</VsTargetBranch>
+    <VsTargetChannel Condition="'$(VsTargetChannel)' == '' And '$(IsEscrowMode)' == 'true'">int.d$(VsTargetMajorVersion).$(MinorNuGetVersion)</VsTargetChannel>
   </PropertyGroup>
 
   <!-- Config -->
@@ -62,8 +62,16 @@
     <MS_PFX_PATH>$(MSBuildThisFileDirectory)..\keys\35MSSharedLib1024.snk</MS_PFX_PATH>
   </PropertyGroup>
 
-  <Target Name="GetSemanticVersion">
-    <Message Text="$(SemanticVersion)" Importance="High"/>
+  <Target Name="SetHostedBuildVariables">
+    <ItemGroup>
+      <BuildVariable Include="SemanticVersion" Value="$(SemanticVersion)" />
+      <BuildVariable Include="VsTargetChannel" Value="$(VsTargetChannel)" />
+      <BuildVariable Include="VsTargetChannelForTests" Value="$(VsTargetChannelForTests)" />
+      <BuildVariable Include="VsTargetMajorVersion" Value="$(VsTargetMajorVersion)" />
+    </ItemGroup>
+    
+    <Message Text="##vso[task.setvariable variable=%(BuildVariable.Identity);isOutput=true]%(BuildVariable.Value)
+%(BuildVariable.Identity) = '%(BuildVariable.Value)'" Importance="High" />
   </Target>
   <Target Name="GetNuGetSdkVsSemanticVersion">
     <Message Text="$(NuGetSdkVsSemanticVersion)" Importance="High"/>

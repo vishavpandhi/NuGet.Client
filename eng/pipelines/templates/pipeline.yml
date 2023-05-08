@@ -87,6 +87,7 @@ resources:
     ref: refs/heads/main
 
 variables:
+  BINLOG_DIRECTORY: $(Build.StagingDirectory)/binlog
   DOTNET_NOLOGO: 1
   Codeql.Enabled: ${{ parameters.isOfficialBuild }}
   Codeql.TSAEnabled: ${{ parameters.isOfficialBuild }}
@@ -102,23 +103,22 @@ variables:
 
 stages:
 - stage: Initialize
+  pool:
+    vmImage: windows-latest
   jobs:
-  - job: GetSemanticVersion
-    displayName: Get NuGet.Client semantic version
+  - job: SetBuildVariables
+    displayName: Set Build Variables
     timeoutInMinutes: 10
-    pool:
-      vmImage: windows-latest
     steps:
     - template: Initialize_Build_SemanticVersion.yml
 
   - job: Initialize_Build
-    dependsOn: GetSemanticVersion
+    dependsOn: SetBuildVariables
+    displayName: Set Build Number and Tags
     timeoutInMinutes: 10
     variables:
-      SemanticVersion: $[dependencies.GetSemanticVersion.outputs['setsemanticversion.SemanticVersion']]
+      SemanticVersion: $[dependencies.SetBuildVariables.outputs['setbuildvariables.SemanticVersion']]
       BuildRevision: $[counter(format('{0}.{1}', variables['SemanticVersion'], variables['build.definitionname']), 1)]
-    pool:
-      vmImage: windows-latest
     steps:
     - template: Initialize_Build.yml
 
@@ -145,11 +145,11 @@ stages:
     variables:
       BuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.BuildNumber']]
       FullVstsBuildNumber: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.FullVstsBuildNumber']]
-      VsTargetChannel: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannel']]
-      VsTargetChannelForTests: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetChannelForTests']]
-      VsTargetMajorVersion: $[stageDependencies.Initialize.Initialize_Build.outputs['updatebuildnumber.VsTargetMajorVersion']]
+      VsTargetChannel: $[stageDependencies.Initialize.SetBuildVariables.outputs['setbuildvariables.VsTargetChannel']]
+      VsTargetChannelForTests: $[stageDependencies.Initialize.SetBuildVariables.outputs['setbuildvariables.VsTargetChannelForTests']]
+      VsTargetMajorVersion: $[stageDependencies.Initialize.SetBuildVariables.outputs['setbuildvariables.VsTargetMajorVersion']]
       BuildRTM: "false"
-      SemanticVersion: $[stageDependencies.Initialize.GetSemanticVersion.outputs['setsemanticversion.SemanticVersion']]
+      SemanticVersion: $[stageDependencies.Initialize.SetBuildVariables.outputs['setbuildvariables.SemanticVersion']]
     pool:
       name: VSEngSS-MicroBuild2022-1ES
     steps:
