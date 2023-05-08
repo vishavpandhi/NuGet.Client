@@ -3,10 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace NuGet.Test.Utility
 {
@@ -15,7 +15,7 @@ namespace NuGet.Test.Utility
         // Item1 of the returned tuple is the exit code. Item2 is the standard output, and Item3
         // is the error output.
         public static CommandRunnerResult Run(
-            string process,
+            string filename,
             string workingDirectory,
             string arguments,
             bool waitForExit,
@@ -23,20 +23,20 @@ namespace NuGet.Test.Utility
             Action<StreamWriter> inputAction = null,
             IDictionary<string, string> environmentVariables = null)
         {
-            var psi = new ProcessStartInfo(Path.GetFullPath(process), arguments)
+            var processStartInfo = new ProcessStartInfo(Path.GetFullPath(filename), arguments)
             {
                 WorkingDirectory = Path.GetFullPath(workingDirectory),
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardError = waitForExit,
+                RedirectStandardOutput = waitForExit,
                 RedirectStandardInput = inputAction != null
             };
 
 #if !IS_CORECLR
-            psi.EnvironmentVariables["NuGetTestModeEnabled"] = "True";
+            processStartInfo.EnvironmentVariables["NuGetTestModeEnabled"] = "True";
 #else
-            psi.Environment["NuGetTestModeEnabled"] = "True";
+            processStartInfo.Environment["NuGetTestModeEnabled"] = "True";
 #endif
 
             if (environmentVariables != null)
@@ -44,104 +44,72 @@ namespace NuGet.Test.Utility
                 foreach (var pair in environmentVariables)
                 {
 #if !IS_CORECLR
-                    psi.EnvironmentVariables[pair.Key] = pair.Value;
+                    processStartInfo.EnvironmentVariables[pair.Key] = pair.Value;
 #else
-                    psi.Environment[pair.Key] = pair.Value;
+                    processStartInfo.Environment[pair.Key] = pair.Value;
 #endif
                 }
             }
 
-            int exitCode = 1;
-
-            var output = new StringBuilder();
-            var errors = new StringBuilder();
-
-            Process p = null;
-
-            using (p = new Process())
+            using (var process = new Process()
             {
-                p.OutputDataReceived += OutputHandler;
-                p.ErrorDataReceived += ErrorHandler;
-
-                p.StartInfo = psi;
-                p.Start();
-
-                inputAction?.Invoke(p.StandardInput);
-
-                p.BeginOutputReadLine();
-                p.BeginErrorReadLine();
-
-                if (waitForExit)
+                EnableRaisingEvents = true,
+            })
+            {
+                if (!waitForExit)
                 {
-#if DEBUG
-                    p.WaitForExit();
-                    var processExited = true;
-#else
-                    var processExited = p.WaitForExit(timeOutInMilliseconds);
-#endif
-                    if (processExited)
-                    {
-                        p.WaitForExit();
-                        exitCode = p.ExitCode;
-                    }
-                    else
-                    {
-                        Kill(p);
-                        WaitForExit(p);
+                    process.Start();
 
-                        var processName = Path.GetFileName(process);
-
-                        throw new TimeoutException($"{processName} timed out: {psi.Arguments}{Environment.NewLine}Output:{output}{Environment.NewLine}Error:{errors}");
-                    }
+                    return new CommandRunnerResult(process, 0, string.Empty, string.Empty);
                 }
-            }
 
-            void OutputHandler(object sendingProcess, DataReceivedEventArgs e)
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                    output.AppendLine(e.Data);
-            }
+                var output = new StringBuilder();
+                var error = new StringBuilder();
 
-            void ErrorHandler(object sendingProcess, DataReceivedEventArgs e)
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                    errors.AppendLine(e.Data);
-            }
+                using ManualResetEvent resetEvent = new ManualResetEvent(false);
 
-            return new CommandRunnerResult(p, exitCode, output.ToString(), errors.ToString());
-        }
-
-        private static void Kill(Process process)
-        {
-            try
-            {
-                process.Kill();
-            }
-            catch (InvalidOperationException)
-            {
-            }
-            catch (Win32Exception)
-            {
-            }
-        }
-
-        private static void WaitForExit(Process process)
-        {
-            try
-            {
-                if (!process.HasExited)
+                process.ErrorDataReceived += (_, args) =>
                 {
-                    process.WaitForExit();
+                    if (args.Data != null)
+                    {
+                        error.AppendLine(args.Data);
+                    }
+                };
+
+                process.OutputDataReceived += (_, args) =>
+                {
+                    if (args.Data != null)
+                    {
+                        output.AppendLine(args.Data);
+                    }
+                };
+
+                process.Exited += (sender, args) => { resetEvent.Set(); };
+
+                process.StartInfo = processStartInfo;
+                process.Start();
+
+                inputAction?.Invoke(process.StandardInput);
+
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                bool processExited = resetEvent.WaitOne(timeOutInMilliseconds);
+
+                if (processExited)
+                {
+                    return new CommandRunnerResult(process, process.ExitCode, output.ToString(), error.ToString());
                 }
-            }
-            catch (InvalidOperationException)
-            {
-            }
-            catch (Win32Exception)
-            {
-            }
-            catch (SystemException)
-            {
+
+                try
+                {
+                    process.Kill();
+                }
+                catch (Exception)
+                {
+                }
+
+                throw new TimeoutException($"{processStartInfo.FileName} {processStartInfo.Arguments} timed out after {TimeSpan.FromMilliseconds(timeOutInMilliseconds).TotalSeconds:N0} seconds:{Environment.NewLine}Output:{output}{Environment.NewLine}Error:{error}");
             }
         }
     }

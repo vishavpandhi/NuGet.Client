@@ -928,7 +928,7 @@ namespace NuGet.CommandLine.Test
             {
                 var args = "list test -Source " + invalidInput;
                 CommandRunnerResult result = CommandRunner.Run(
-                    process: nugetexe,
+                    filename: nugetexe,
                     workingDirectory: pathContext.SolutionRoot,
                     arguments: args,
                     waitForExit: true);

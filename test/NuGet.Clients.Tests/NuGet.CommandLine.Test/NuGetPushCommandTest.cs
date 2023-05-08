@@ -2484,7 +2484,7 @@ namespace NuGet.CommandLine.Test
                 };
 
                 CommandRunnerResult result = CommandRunner.Run(
-                                process: nugetexe,
+                                filename: nugetexe,
                                 workingDirectory: pathContext.SolutionRoot,
                                 arguments: string.Join(" ", args),
                                 waitForExit: true);

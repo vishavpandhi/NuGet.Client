@@ -38,7 +38,7 @@ namespace Msbuild.Integration.Test
                     try
                     {
                         var result = CommandRunner.Run(
-                            process: msbuild,
+                            filename: msbuild,
                             workingDirectory: Environment.CurrentDirectory,
                             arguments: "-help",
                             waitForExit: true);
@@ -59,7 +59,7 @@ namespace Msbuild.Integration.Test
                 {
                     string vswherePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft Visual Studio", "Installer", "vswhere.exe");
 
-                    CommandRunnerResult result = CommandRunner.Run(process: vswherePath,
+                    CommandRunnerResult result = CommandRunner.Run(filename: vswherePath,
                         workingDirectory: Environment.CurrentDirectory,
                         arguments: "-latest -prerelease -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe",
                         waitForExit: true);
