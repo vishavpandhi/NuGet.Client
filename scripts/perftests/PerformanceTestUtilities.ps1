@@ -6,7 +6,7 @@ function GenerateNameFromGitUrl([string]$gitUrl)
     return $gitUrl.Substring($($gitUrl.LastIndexOf('/') + 1)).Replace('.','-')
 }
 
-# Appends the log time in front of the log statement with the color specified. 
+# Appends the log time in front of the log statement with the color specified.
 function Log([string]$logStatement, [string]$color)
 {
     if([string]::IsNullOrEmpty($color))
@@ -14,7 +14,7 @@ function Log([string]$logStatement, [string]$color)
         Write-Host "$($(Get-Date).ToString()): $logStatement"
     }
     else
-    { 
+    {
         Write-Host "$($(Get-Date).ToString()): $logStatement" -ForegroundColor $color
     }
 }
@@ -111,8 +111,8 @@ Function DownloadRepository([string] $repository, [string] $commitHash, [string]
     }
 }
 
-# Find the appropriate solution file for the repository. Looks for a solution file matching the repo name, 
-# if not it takes the first available sln file in the repo. 
+# Find the appropriate solution file for the repository. Looks for a solution file matching the repo name,
+# if not it takes the first available sln file in the repo.
 Function GetSolutionFilePath([string] $repository, [string] $sourceFolderPath)
 {
     $gitRepoName = $repository.Substring($($repository.LastIndexOf('/') + 1))
@@ -138,7 +138,7 @@ Function GetSolutionFilePath([string] $repository, [string] $sourceFolderPath)
     Return $solutionFilePath
 }
 
-# Given a repository and a hash, checks out the revision in the given source directory. The return is a solution file if found. 
+# Given a repository and a hash, checks out the revision in the given source directory. The return is a solution file if found.
 Function SetupGitRepository([string] $repository, [string] $commitHash, [string] $sourceFolderPath)
 {
     Log "Setting up $repository into $sourceFolderPath"
@@ -207,9 +207,25 @@ Function GetNuGetFoldersPath([string] $testFoldersPath)
 }
 
 # Sets up the global packages folder, http cache and plugin caches and cleans them before starting.
-Function SetupNuGetFolders([string] $nugetClientFilePath, [string] $nugetFoldersPath)
+Function SetupNuGetFolders([string] $nugetClientFilePath, [string] $nugetFoldersPath, [string] $nugetFoldersPathGPF, [string] $nugetFoldersPathScratch)
 {
-    $Env:NUGET_PACKAGES = [System.IO.Path]::Combine($nugetFoldersPath, "gpf")
+
+    If ([string]::IsNullOrEmpty($nugetFoldersPathGPF))
+    {
+        $Env:NUGET_PACKAGES = [System.IO.Path]::Combine($nugetFoldersPath, "gpf")
+    }
+    else {
+        $Env:NUGET_PACKAGES = $nugetFoldersPathGPF
+    }
+
+    If ([string]::IsNullOrEmpty($nugetFoldersPathScratch))
+    {
+        $Env:NUGET_SCRATCH = [System.IO.Path]::Combine($nugetFoldersPath, "tmp")
+    }
+    else {
+        $Env:NUGET_SCRATCH = $nugetFoldersPathScratch
+    }
+
     $Env:NUGET_HTTP_CACHE_PATH = [System.IO.Path]::Combine($nugetFoldersPath, "hcp")
     $Env:NUGET_PLUGINS_CACHE_PATH = [System.IO.Path]::Combine($nugetFoldersPath, "pcp")
 
@@ -222,15 +238,25 @@ Function SetupNuGetFolders([string] $nugetClientFilePath, [string] $nugetFolders
 
 # Cleanup the nuget folders and delete the nuget folders path.
 # This should only be invoked by the the performance tests
-Function CleanNuGetFolders([string] $nugetClientFilePath, [string] $nugetFoldersPath)
+Function CleanNuGetFolders([string] $nugetClientFilePath, [string] $nugetFoldersPath, [string] $nugetFoldersPathGPF, [string] $nugetFoldersPathScratch)
 {
-    Log "Cleanup up the NuGet folders - global packages folder, http/plugins caches. Client: $nugetClientFilePath. Folders: $nugetFoldersPath"
+    Log "Cleanup up the NuGet folders - global packages folder, http/plugins caches. Client: $nugetClientFilePath. Folders: $nugetFoldersPath GPF: $nugetFoldersPathGPF"
 
     LocalsClearAll $nugetClientFilePath
 
     Remove-Item $nugetFoldersPath -Recurse -Force -ErrorAction Ignore
+    If (-not [string]::IsNullOrEmpty($nugetFoldersPathGPF))
+    {
+        Remove-Item $nugetFoldersPathGPF -Recurse -Force -ErrorAction Ignore
+    }
+
+    If (-not [string]::IsNullOrEmpty($nugetFoldersPathScratch))
+    {
+        Remove-Item $nugetFoldersPathScratch -Recurse -Force -ErrorAction Ignore
+    }
 
     [Environment]::SetEnvironmentVariable("NUGET_PACKAGES", $Null)
+    [Environment]::SetEnvironmentVariable("NUGET_SCRATCH", $Null)
     [Environment]::SetEnvironmentVariable("NUGET_HTTP_CACHE_PATH", $Null)
     [Environment]::SetEnvironmentVariable("NUGET_PLUGINS_CACHE_PATH", $Null)
     [Environment]::SetEnvironmentVariable("NUGET_SOLUTION_PACKAGES_FOLDER_PATH", $Null)
@@ -421,7 +447,7 @@ Function RunRestore(
     {
         $arguments.Add("/t:restore")
     }
-    Else 
+    Else
     {
         $arguments.Add("restore")
     }
@@ -461,20 +487,20 @@ Function RunRestore(
     {
         $arguments.Add("-NonInteractive")
     }
-    
+
     If($isClientDotnetExe -Or $isClientMSBuild)
-    {   
+    {
         If ($staticGraphRestore)
         {
             $staticGraphOutputValue = "true"
             $arguments.Add("/p:RestoreUseStaticGraphEvaluation=true")
         }
-        Else 
+        Else
         {
             $staticGraphOutputValue = "false"
         }
     }
-    Else 
+    Else
     {
         $staticGraphOutputValue = "N/A"
     }
@@ -483,7 +509,7 @@ Function RunRestore(
 
     $logs = . $nugetClientFilePath $arguments | Out-String
     if($LASTEXITCODE -ne 0)
-    { 
+    {
         throw "The command `"$nugetClientFilePath $arguments`" finished with exit code $LASTEXITCODE.`n" + $logs
     }
 
@@ -505,6 +531,9 @@ Function RunRestore(
     $globalPackagesFolderNupkgFilesInfo = GetFilesInfo(GetPackageFiles $folderPath)
     $globalPackagesFolderFilesInfo = GetFilesInfo(GetFiles $folderPath)
 
+    $folderPath = $Env:NUGET_SCRATCH
+    $tmpFilesInfo = GetFilesInfo(GetFiles $folderPath)
+
     $folderPath = $Env:NUGET_HTTP_CACHE_PATH
     $httpCacheFilesInfo = GetFilesInfo(GetFiles $folderPath)
 
@@ -519,7 +548,7 @@ Function RunRestore(
         $columnHeaders = "Client Name,Client Version,Solution Name,Test Run ID,Scenario Name,Total Time (seconds),Core Restore Time (seconds),Force,Static Graph," + `
             "Global Packages Folder .nupkg Count,Global Packages Folder .nupkg Size (MB),Global Packages Folder File Count,Global Packages Folder File Size (MB),Clean Global Packages Folder," + `
             "HTTP Cache File Count,HTTP Cache File Size (MB),Clean HTTP Cache,Plugins Cache File Count,Plugins Cache File Size (MB),Clean Plugins Cache,Kill MSBuild and dotnet Processes," + `
-            "Processor Name,Processor Physical Core Count,Processor Logical Core Count"
+            "Processor Name,Processor Physical Core Count,Processor Logical Core Count, tmp File Count, tmp File Size (MB)"
 
         OutFileWithCreateFolders $resultsFilePath $columnHeaders
     }
@@ -527,7 +556,7 @@ Function RunRestore(
     $data = "$clientName,$clientVersion,$solutionName,$testRunId,$scenarioName,$totalTime,$restoreCoreTime,$force,$staticGraphOutputValue," + `
         "$($globalPackagesFolderNupkgFilesInfo.Count),$($globalPackagesFolderNupkgFilesInfo.TotalSizeInMB),$($globalPackagesFolderFilesInfo.Count),$($globalPackagesFolderFilesInfo.TotalSizeInMB),$cleanGlobalPackagesFolder," + `
         "$($httpCacheFilesInfo.Count),$($httpCacheFilesInfo.TotalSizeInMB),$cleanHttpCache,$($pluginsCacheFilesInfo.Count),$($pluginsCacheFilesInfo.TotalSizeInMB),$cleanPluginsCache,$killMsBuildAndDotnetExeProcesses," + `
-        "$($processorInfo.Name),$($processorInfo.NumberOfCores),$($processorInfo.NumberOfLogicalProcessors)"
+        "$($processorInfo.Name),$($processorInfo.NumberOfCores),$($processorInfo.NumberOfLogicalProcessors), $($tmpFilesInfo.Count),$($tmpFilesInfo.TotalSizeInMB)"
 
     Add-Content -Path $resultsFilePath -Value $data
 
