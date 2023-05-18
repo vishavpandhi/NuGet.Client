@@ -262,7 +262,7 @@ namespace NuGet.Commands.Restore.Utility
         {
             string? auditLevel = _restoreAuditProperties.AuditLevel?.Trim();
 
-            if (auditLevel == null)
+            if (string.IsNullOrEmpty(auditLevel))
             {
                 return 1;
             }
@@ -297,7 +297,7 @@ namespace NuGet.Commands.Restore.Utility
         {
             string? auditMode = _restoreAuditProperties.AuditMode?.Trim();
 
-            if (auditMode == null)
+            if (string.IsNullOrEmpty(auditMode))
             {
                 return NuGetAuditMode.Unknown;
             }
