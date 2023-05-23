@@ -23,7 +23,7 @@ namespace NuGet.Common
         internal KeyedLock()
         {
             _locks = new Dictionary<string, LockState>();
-            _dictionaryLock = new SemaphoreSlim(initialCount: 1);
+            _dictionaryLock = new SemaphoreSlim(initialCount: 0, maxCount: 1);
         }
 
         internal async Task EnterAsync(string key, CancellationToken token)
